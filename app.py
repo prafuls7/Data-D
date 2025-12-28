@@ -34,7 +34,7 @@ st.markdown("""
     }
     
     .stApp {
-        background-color: #ffffff;
+       background-color: #112240;
     }
     
     /* Header styling */
@@ -880,3 +880,4 @@ def main():
 # Run the app
 if __name__ == "__main__":
     main()
+
