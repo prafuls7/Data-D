@@ -222,7 +222,7 @@ class NSDLBondAnalyzer:
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("https://", adapter)
-        self.session.mount("http:// adapter)
+        self.session.mount("http://", adapter)  # FIXED: Added missing quote
         
         # User-Agents
         self.user_agents = [
