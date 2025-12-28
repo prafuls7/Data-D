@@ -22,287 +22,153 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS with BADDIE theme - FIXED FOR TEXT VISIBILITY
+# Custom CSS with BADDIE branding
 st.markdown("""
 <style>
-    /* Main theme colors */
-    :root {
-        --primary-blue: #1e3a8a;
-        --secondary-blue: #3b82f6;
-        --light-blue: #eff6ff;
-        --accent-color: #8b5cf6;
-        --dark-text: #1e293b;
-        --medium-text: #475569;
-    }
-    
-    /* Main app background */
-    .stApp {
-        background-color: #ffffff;
-    }
-    
-    /* Ensure all text is visible */
-    body {
-        color: #1e293b !important;
-    }
-    
-    /* Make Streamlit default text dark */
-    .stMarkdown, .stText, .stInfo, .stWarning, .stSuccess, .stError {
-        color: #1e293b !important;
-    }
-    
-    /* Sidebar text */
-    section[data-testid="stSidebar"] * {
-        color: #1e293b !important;
-    }
-    
-    section[data-testid="stSidebar"] .stMarkdown {
-        color: #1e293b !important;
-    }
-    
-    /* Header styling */
-    .main-header {
+    /* BADDIE Branding Header */
+    .baddie-header {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        color: white !important;
+        color: white;
         padding: 2rem;
-        border-radius: 15px;
+        border-radius: 10px;
         margin-bottom: 2rem;
         text-align: center;
         box-shadow: 0 4px 20px rgba(30, 58, 138, 0.2);
     }
     
-    .logo-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 20px;
-        margin-bottom: 15px;
-    }
-    
-    .app-title {
-        font-size: 3rem;
+    .baddie-title {
+        font-size: 2.8rem;
         font-weight: 900;
         margin-bottom: 0.5rem;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        color: white !important;
     }
     
-    .app-subtitle {
-        font-size: 1.4rem;
+    .baddie-subtitle {
+        font-size: 1.3rem;
         opacity: 0.95;
         font-style: italic;
         margin-bottom: 10px;
-        color: rgba(255, 255, 255, 0.9) !important;
     }
     
-    .funny-tagline {
-        background: rgba(255,255,255,0.15);
-        padding: 10px 25px;
-        border-radius: 25px;
+    .funny-fullform {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 10px 20px;
+        border-radius: 20px;
         display: inline-block;
         font-weight: bold;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.2);
-        color: white !important;
+        margin-top: 10px;
     }
     
-    /* Upload button styling - Blue/White theme */
+    /* Blue/White upload button */
     .upload-btn {
         background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-        color: white !important;
+        color: white;
         border: 2px solid white;
-        padding: 15px 35px;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: 700;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
+        box-shadow: 0 4px 6px rgba(30, 64, 175, 0.2);
     }
     
     .upload-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
-        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-    }
-    
-    .stButton > button {
-        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-        color: white !important;
-        border: none;
-        padding: 12px 28px;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 16px;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        box-shadow: 0 6px 12px rgba(30, 64, 175, 0.3);
     }
     
-    /* Progress bar */
+    /* Original styling kept intact */
     .stProgress > div > div > div > div {
-        background-color: #3b82f6;
-        background-image: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        background-color: #4CAF50;
     }
-    
-    /* Success message */
+    .stButton > button {
+        width: 100%;
+        background: linear-gradient(45deg, #4CAF50, #2E7D32);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+    .stButton > button:hover {
+        background: linear-gradient(45deg, #388E3C, #1B5E20);
+    }
     .success-box {
-        padding: 25px;
-        background: linear-gradient(135deg, #dbeafe 0%, #f0f9ff 100%);
-        border-radius: 12px;
-        border-left: 6px solid #3b82f6;
-        margin: 20px 0;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        color: #1e293b !important;
+        padding: 20px;
+        background-color: #d4edda;
+        border-radius: 10px;
+        border-left: 5px solid #28a745;
+        margin: 10px 0;
     }
     
-    .success-box h4, .success-box p {
-        color: #1e293b !important;
-    }
-    
-    /* Feature cards */
+    /* Feature card for NSDL scraping */
     .feature-card {
         background: white;
-        border-radius: 12px;
-        padding: 25px;
-        margin: 20px 0;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        border-top: 4px solid #3b82f6;
-        color: #1e293b !important;
-    }
-    
-    .feature-card h4, .feature-card li, .feature-card strong {
-        color: #1e293b !important;
-    }
-    
-    /* Data table styling */
-    .dataframe {
         border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border: 1px solid #e5e7eb;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #3b82f6;
     }
     
-    /* Sidebar styling - FIXED FOR VISIBILITY */
-    section[data-testid="stSidebar"] {
-        background-color: #f8fafc !important;
-        border-right: 1px solid #e5e7eb;
-    }
-    
-    /* Sidebar text specifically */
-    [data-testid="stSidebar"] .stMarkdown,
-    [data-testid="stSidebar"] .stMarkdown h1,
-    [data-testid="stSidebar"] .stMarkdown h2,
-    [data-testid="stSidebar"] .stMarkdown h3,
-    [data-testid="stSidebar"] .stMarkdown h4,
-    [data-testid="stSidebar"] .stMarkdown p,
-    [data-testid="stSidebar"] .stMarkdown li,
-    [data-testid="stSidebar"] .stMarkdown code {
+    /* Make all text visible */
+    body {
         color: #1e293b !important;
     }
     
-    /* Info boxes */
-    .info-box {
-        background-color: #f0f9ff;
-        border-radius: 10px;
-        padding: 20px;
-        margin: 15px 0;
-        border: 2px solid #e0f2fe;
+    .stMarkdown, .stText, .stInfo, .stWarning, .stSuccess, .stError {
         color: #1e293b !important;
     }
     
-    .info-box h4, .info-box li, .info-box ol, .info-box strong {
+    section[data-testid="stSidebar"] * {
         color: #1e293b !important;
     }
     
-    /* Feature list styling */
-    .feature-list li {
-        font-size: 16px;
-        line-height: 1.7;
-        margin-bottom: 10px;
-        padding-left: 5px;
-        color: #1e293b !important;
-    }
-    
-    /* Funny full form display */
-    .fullform-box {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        padding: 20px;
-        border-radius: 12px;
-        text-align: center;
-        margin: 25px auto;
-        max-width: 700px;
-        border: 2px dashed #3b82f6;
-        color: #1e293b !important;
-    }
-    
-    .fullform-box h3, .fullform-box p {
-        color: #1e293b !important;
-    }
-    
-    /* Logo styling */
+    /* Logo placeholder */
     .logo-circle {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
         background: linear-gradient(135deg, #3b82f6, #8b5cf6);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white !important;
+        color: white;
         font-weight: bold;
-        font-size: 24px;
+        font-size: 20px;
         box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-    }
-    
-    /* Streamlit info, warning, success boxes */
-    .stAlert, .stInfo, .stWarning, .stSuccess, .stError {
-        color: #1e293b !important;
-    }
-    
-    /* Make sure all headings are visible */
-    h1, h2, h3, h4, h5, h6 {
-        color: #1e293b !important;
-    }
-    
-    /* Make sure all paragraphs and list items are visible */
-    p, li, span, div {
-        color: #1e293b !important;
-    }
-    
-    /* Fix slider text */
-    .stSlider label {
-        color: #1e293b !important;
-    }
-    
-    /* Fix checkbox text */
-    .stCheckbox label {
-        color: #1e293b !important;
-    }
-    
-    /* Fix uploader text */
-    .stFileUploader label {
-        color: #1e293b !important;
-    }
-    
-    /* Make metric values visible */
-    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-        color: #1e293b !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
+# BADDIE Header
+st.markdown("""
+<div class="baddie-header">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+        <div class="logo-circle">B</div>
+        <div>
+            <h1 class="baddie-title">BADDIE - ETL</h1>
+            <p class="baddie-subtitle">Bond Analytics & Data DEbt Intelligence Engine</p>
+        </div>
+    </div>
+    <div class="funny-fullform">😏 Making bond analysis cool since today!</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Funny full form display
+st.markdown("""
+<div style="text-align: center; margin: 20px 0; padding: 15px; background: #f0f9ff; border-radius: 10px; border: 2px solid #e0f2fe;">
+    <h4 style="color: #1e40af; margin: 0;">🎯 BADDIE = <span style="color: #3b82f6;">B</span>ond <span style="color: #3b82f6;">A</span>nalytics & <span style="color: #3b82f6;">D</span>ata <span style="color: #3b82f6;">D</span>Ebt <span style="color: #3b82f6;">I</span>ntelligence <span style="color: #3b82f6;">E</span>ngine</h4>
+</div>
+""", unsafe_allow_html=True)
+
 class NSDLBondAnalyzer:
     def __init__(self, progress_bar=None, status_text=None):
-        # Create session with retry strategy
+        # Create session with retry strategy for better reliability
         self.session = requests.Session()
         
+        # Add retry strategy
         retry_strategy = Retry(
             total=3,
             backoff_factor=1,
@@ -313,11 +179,12 @@ class NSDLBondAnalyzer:
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
         
-        # User-Agents
+        # Rotating User-Agents
         self.user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0'
         ]
         
         self.rating_agency_mapping = {
@@ -333,8 +200,20 @@ class NSDLBondAnalyzer:
         self.progress_bar = progress_bar
         self.status_text = status_text
         
-        # Define all output columns
-        self.output_columns = [
+        # Column patterns for flexible matching
+        self.column_patterns = {
+            'isin': ['isin', 'ISIN'],
+            'seniority': ['seniority', 'SENIORITY', 'Seniority'],
+            'coupon_fixed': ['coupon_fixed', 'Coupon_fixed', 'Coupon Fixed', 'coupon fixed', 'Coupon'],
+            'pay_in_date_1': ['pay-in date_1', 'pay in date_1', 'payin date_1', 'pay_in_date_1', 'payin date'],
+            'redemption_date_1': ['redemption date_1', 'Redemption date_1', 'redemption_date_1', 'redemption date'],
+            'issue_price': ['issue price', 'ISSUE PRICE', 'issue_price', 'Issue Price'],
+            'face_value': ['face value', 'FACE VALUE', 'face_value', 'Face Value'],
+            'total_issue_size': ['total issue size', 'TOTAL ISSUE SIZE', 'total_issue_size', 'Total Issue Size']
+        }
+        
+        # Define comprehensive bond data columns
+        self.comprehensive_columns = [
             'ISIN', 'ISSUER NAME', 'NAME OF INSTRUMENT', 'DESCRIPTION IN NSDL',
             'SENIORITY', 'SECURED/UNSECURED', 'Coupon details Coupon_fixed',
             'Coupon details coupon_floating', 'Coupon frequency', 'COUPON FREQUENCY_NUMBER',
@@ -377,6 +256,15 @@ class NSDLBondAnalyzer:
         if self.status_text:
             self.status_text.text(f"📊 {message} ({percent*100:.0f}%)")
     
+    def find_column_name(self, df_columns, patterns):
+        """Find column name in dataframe that matches given patterns"""
+        for col in df_columns:
+            col_lower = str(col).lower().strip()
+            for pattern in patterns:
+                if pattern.lower() in col_lower:
+                    return col
+        return None
+    
     def fetch_api_data(self, url, max_retries=3):
         """Fetch data from NSDL API with enhanced error handling"""
         headers = {
@@ -401,15 +289,17 @@ class NSDLBondAnalyzer:
                     try:
                         return response.json()
                     except json.JSONDecodeError:
+                        # Try to fix common JSON issues
                         text = response.text.strip()
                         if text.startswith('"') and text.endswith('"'):
                             text = text[1:-1]
                         return json.loads(text)
-                elif response.status_code == 429:
-                    wait_time = 2 ** attempt
+                elif response.status_code == 429:  # Rate limit
+                    wait_time = 2 ** attempt  # Exponential backoff
                     time.sleep(wait_time)
                     continue
                 else:
+                    st.warning(f"API returned status {response.status_code} for {url}")
                     return {}
                     
             except requests.exceptions.RequestException as e:
@@ -418,21 +308,51 @@ class NSDLBondAnalyzer:
                     time.sleep(wait_time)
                     continue
                 else:
+                    st.warning(f"Error fetching {url}: {str(e)}")
                     return {}
         
         return {}
     
-    def extract_bond_data(self, isin):
+    def get_instrument_data(self, isin):
+        """Get instrument data from NSDL"""
+        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/instruments?isin={isin}"
+        return self.fetch_api_data(url)
+    
+    def get_rating_data(self, isin):
+        """Get credit rating data"""
+        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/credit-ratings?isin={isin}"
+        return self.fetch_api_data(url)
+    
+    def get_matured_restructured_data(self, isin):
+        """Check if ISIN is matured or restructured"""
+        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/isins?isin={isin}"
+        return self.fetch_api_data(url)
+    
+    def get_coupon_data(self, isin):
+        """Get coupon details from NSDL"""
+        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/coupondetail?isin={isin}"
+        return self.fetch_api_data(url)
+    
+    def get_redemption_data(self, isin):
+        """Get redemption details from NSDL"""
+        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/redemptions?isin={isin}"
+        return self.fetch_api_data(url)
+    
+    def get_listing_data(self, isin):
+        """Get listing details from NSDL"""
+        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/listings?isin={isin}"
+        return self.fetch_api_data(url)
+    
+    def extract_comprehensive_data(self, isin):
         """Extract comprehensive bond data from NSDL APIs"""
-        base_url = "https://www.indiabondinfo.nsdl.com/bds-service/v1/public"
-        bond_data = {col: '' for col in self.output_columns}
+        bond_data = {col: '' for col in self.comprehensive_columns}
         bond_data['ISIN'] = isin
         bond_data['suspended'] = 'No'
-        bond_data['restructured'] = ''
+        bond_data['NSDL_Autocheck (Y/N)'] = 'Y'
         
         try:
             # API 1: Basic ISIN info
-            url1 = f"{base_url}/isins?isin={isin}"
+            url1 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/isins?isin={isin}"
             data1 = self.fetch_api_data(url1)
             
             if data1 and 'data' in data1 and len(data1['data']) > 0:
@@ -440,14 +360,14 @@ class NSDLBondAnalyzer:
                 bond_data['NAME OF INSTRUMENT'] = data1['data'][0].get('secType', '')
             
             # API 2: Instrument details
-            url2 = f"{base_url}/bdsinfo/instruments?isin={isin}"
+            url2 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/instruments?isin={isin}"
             data2 = self.fetch_api_data(url2)
             
             if data2 and 'data' in data2 and len(data2['data']) > 0:
                 inst = data2['data'][0]
                 
                 bond_data['DESCRIPTION IN NSDL'] = inst.get('instrumentDesc', '')
-                bond_data['SENIORITY'] = inst.get('seniorityRepayment', inst.get('securedFlag', ''))
+                bond_data['SENIORITY'] = inst.get('seniorityRepayment', '')
                 bond_data['SECURED/UNSECURED'] = inst.get('secured', '')
                 bond_data['ISSUE PRICE'] = inst.get('issuePrice', '')
                 bond_data['FACE VALUE'] = inst.get('faceValue', '')
@@ -513,7 +433,7 @@ class NSDLBondAnalyzer:
                     bond_data['Description_of_Security'] = ' | '.join(desc_parts)
             
             # API 3: Coupon details
-            url3 = f"{base_url}/bdsinfo/coupondetail?isin={isin}"
+            url3 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/coupondetail?isin={isin}"
             data3 = self.fetch_api_data(url3)
             
             if data3 and 'data' in data3 and len(data3['data']) > 0:
@@ -555,7 +475,7 @@ class NSDLBondAnalyzer:
                         bond_data['Step down Rate'] = step.get('resetRateStepDown', '')
             
             # API 4: Redemption details
-            url4 = f"{base_url}/bdsinfo/redemptions?isin={isin}"
+            url4 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/redemptions?isin={isin}"
             data4 = self.fetch_api_data(url4)
             
             if data4 and 'data' in data4 and len(data4['data']) > 0:
@@ -591,7 +511,7 @@ class NSDLBondAnalyzer:
                     bond_data['call_description'] = ' | '.join(call_desc_parts)
             
             # API 5: Listing details
-            url5 = f"{base_url}/bdsinfo/listings?isin={isin}"
+            url5 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/listings?isin={isin}"
             data5 = self.fetch_api_data(url5)
             
             if data5 and 'data' in data5 and len(data5['data']) > 0:
@@ -602,12 +522,10 @@ class NSDLBondAnalyzer:
                 if listing_details:
                     bond_data['LISTING EXCHANGE'] = listing_details[0].get('exchangeName', '')
             
-            # Rating data
-            url6 = f"{base_url}/bdsinfo/credit-ratings?isin={isin}"
-            data6 = self.fetch_api_data(url6)
-            
-            if data6 and 'currentRatings' in data6:
-                for rating in data6['currentRatings']:
+            # Get rating data
+            rating_data = self.get_rating_data(isin)
+            if rating_data and 'currentRatings' in rating_data:
+                for rating in rating_data['currentRatings']:
                     agency_name = rating.get('creditRatingAgencyName', '')
                     rating_value = rating.get('currentRating', '')
                     
@@ -639,51 +557,359 @@ class NSDLBondAnalyzer:
                                 bond_data['IVR'] = 'IVR'
                             break
             
-            # Set RATED/UNRATED based on ratings
+            # Check matured/restructured
+            matured_data = self.get_matured_restructured_data(isin)
+            if matured_data:
+                if matured_data.get('isin') is None:
+                    bond_data['suspended'] = 'Yes'
+                elif matured_data.get('restructuredStatus') == 'Y':
+                    bond_data['restructured'] = 'Yes'
+                    bond_data['suspended'] = 'Yes'
+            
+            # Set RATED/UNRATED
             if any(bond_data.get(f'RATING_{i}') for i in range(1, 9)):
                 bond_data['RATED/UNRATED'] = 'RATED'
             else:
                 bond_data['RATED/UNRATED'] = 'UNRATED'
-            
-            # Set NSDL_Autocheck
-            bond_data['NSDL_Autocheck (Y/N)'] = 'Y'
             
         except Exception as e:
             bond_data['ERROR'] = str(e)
         
         return bond_data
     
-    def process_isins(self, isins, delay=0.5):
-        """Process multiple ISINs and extract bond data"""
+    def extract_comprehensive_batch(self, df, delay=0.5):
+        """Extract comprehensive data for all ISINs in batch"""
         results = []
-        total_isins = len(isins)
         
-        for idx, isin in enumerate(isins):
-            isin = str(isin).strip()
+        # Find ISIN column
+        isin_col = self.find_column_name(df.columns.tolist(), self.column_patterns['isin'])
+        if not isin_col:
+            st.error("❌ ERROR: No ISIN column found!")
+            return None
+        
+        total_rows = len(df)
+        
+        for idx, row in df.iterrows():
+            isin = str(row[isin_col]).strip()
             if not isin or isin.lower() == 'nan':
                 continue
             
             # Update progress
-            progress_pct = (idx + 1) / total_isins
-            self.update_progress(f"Extracting data for ISIN {idx+1}/{total_isins}", progress_pct)
+            progress_pct = (idx + 1) / total_rows
+            self.update_progress(f"Extracting comprehensive data {idx+1}/{total_rows}", progress_pct)
             
-            # Extract bond data
-            bond_data = self.extract_bond_data(isin)
+            # Extract comprehensive data
+            bond_data = self.extract_comprehensive_data(isin)
             results.append(bond_data)
             
-            # Rate limiting
+            # Rate limiting with random delay
             time.sleep(delay + random.uniform(0, 0.3))
         
         # Create DataFrame with all columns
-        df = pd.DataFrame(results)
+        result_df = pd.DataFrame(results)
         
-        # Ensure all output columns exist
-        for col in self.output_columns:
-            if col not in df.columns:
-                df[col] = ''
+        # Ensure all columns exist
+        for col in self.comprehensive_columns:
+            if col not in result_df.columns:
+                result_df[col] = ''
         
-        # Reorder columns
-        return df[self.output_columns]
+        return result_df[self.comprehensive_columns]
+    
+    # Keep all original methods below...
+    def compare_values(self, val1, val2, data_type='text'):
+        """Compare two values and return status"""
+        try:
+            # Handle missing values
+            if pd.isna(val1) or val1 is None or str(val1).strip() == '':
+                return 'MISSING', 'File value missing'
+            
+            if pd.isna(val2) or val2 is None or str(val2).strip() == '':
+                return 'MISSING', 'API value missing'
+            
+            # Clean values based on type
+            if data_type == 'date':
+                # Try to parse dates
+                try:
+                    val1_clean = pd.to_datetime(val1).strftime('%d-%m-%Y')
+                    val2_clean = pd.to_datetime(val2).strftime('%d-%m-%Y')
+                except:
+                    val1_clean = str(val1).strip()
+                    val2_clean = str(val2).strip()
+            elif data_type in ['number', 'float']:
+                try:
+                    val1_clean = float(str(val1).replace(',', ''))
+                    val2_clean = float(str(val2).replace(',', ''))
+                except:
+                    val1_clean = str(val1).strip()
+                    val2_clean = str(val2).strip()
+            else:
+                val1_clean = str(val1).strip().lower()
+                val2_clean = str(val2).strip().lower()
+            
+            # Compare
+            if val1_clean == val2_clean:
+                return 'MATCH', ''
+            else:
+                return 'MISMATCH', f'File: {val1}, API: {val2}'
+        except:
+            return 'ERROR', 'Comparison error'
+    
+    def perform_comparison(self, df, delay=0.5):
+        """Perform comparison of columns with NSDL data"""
+        results = []
+        
+        # Find ISIN column
+        isin_col = self.find_column_name(df.columns.tolist(), self.column_patterns['isin'])
+        if not isin_col:
+            st.error("❌ ERROR: No ISIN column found in the file!")
+            st.info("Please ensure your file has a column named 'ISIN' or 'isin'")
+            return None
+        
+        # Map other columns
+        col_mapping = {}
+        for key, patterns in self.column_patterns.items():
+            if key != 'isin':
+                col_name = self.find_column_name(df.columns.tolist(), patterns)
+                col_mapping[key] = col_name
+        
+        total_rows = len(df)
+        
+        for idx, row in df.iterrows():
+            isin = str(row[isin_col]).strip()
+            if not isin or isin.lower() == 'nan':
+                continue
+            
+            # Update progress
+            progress_pct = (idx + 1) / total_rows
+            self.update_progress(f"Processing ISIN {idx+1}/{total_rows}", progress_pct)
+            
+            # Fetch data from API
+            instrument_data = self.get_instrument_data(isin)
+            
+            # Extract file values
+            file_values = {}
+            for key, col_name in col_mapping.items():
+                if col_name and col_name in row:
+                    file_values[key] = row[col_name]
+                else:
+                    file_values[key] = None
+            
+            # Extract API values
+            api_values = {}
+            if instrument_data and 'instrumentsVo' in instrument_data:
+                if 'instruments' in instrument_data['instrumentsVo']:
+                    inst = instrument_data['instrumentsVo']['instruments']
+                    
+                    # Seniority from secured field
+                    secured = inst.get('secured')
+                    seniority_api = secured if secured else None
+                    
+                    api_values = {
+                        'seniority': seniority_api,
+                        'pay_in_date_1': inst.get('allotmentDate'),
+                        'redemption_date_1': inst.get('redemptionDate'),
+                        'issue_price': inst.get('issuePrice'),
+                        'face_value': inst.get('faceValue'),
+                        'total_issue_size': inst.get('totalIssueSize'),
+                        'coupon_fixed': 'N.A'  # Default
+                    }
+            
+            # Get coupon data separately (from coupon endpoint)
+            coupon_url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/instruments?isin={isin}"
+            coupon_data = self.fetch_api_data(coupon_url)
+            if coupon_data and 'coupensVo' in coupon_data:
+                if 'couponDetails' in coupon_data['coupensVo']:
+                    api_values['coupon_fixed'] = coupon_data['coupensVo']['couponDetails'].get('couponRate', 'N.A')
+            
+            # Compare each field
+            result_row = {'ISIN': isin}
+            
+            for key in ['seniority', 'coupon_fixed', 'pay_in_date_1', 'redemption_date_1', 
+                       'issue_price', 'face_value', 'total_issue_size']:
+                
+                file_val = file_values.get(key)
+                api_val = api_values.get(key)
+                
+                # Determine data type for comparison
+                if key in ['pay_in_date_1', 'redemption_date_1']:
+                    data_type = 'date'
+                elif key in ['issue_price', 'face_value', 'total_issue_size']:
+                    data_type = 'float'
+                else:
+                    data_type = 'text'
+                
+                status, notes = self.compare_values(file_val, api_val, data_type)
+                
+                result_row[f'{key.upper()}_FILE'] = file_val
+                result_row[f'{key.upper()}_API'] = api_val
+                result_row[f'{key.upper()}_STATUS'] = status
+                result_row[f'{key.upper()}_NOTES'] = notes
+            
+            results.append(result_row)
+            
+            # Rate limiting with random delay
+            time.sleep(delay + random.uniform(0, 0.3))
+        
+        return pd.DataFrame(results)
+    
+    def generate_ratings(self, df, delay=0.5):
+        """Generate rating information for ISINs"""
+        results = []
+        
+        # Find ISIN column
+        isin_col = self.find_column_name(df.columns.tolist(), self.column_patterns['isin'])
+        if not isin_col:
+            st.error("❌ ERROR: No ISIN column found!")
+            return None
+        
+        total_rows = len(df)
+        
+        for idx, row in df.iterrows():
+            isin = str(row[isin_col]).strip()
+            if not isin or isin.lower() == 'nan':
+                continue
+            
+            # Update progress
+            progress_pct = (idx + 1) / total_rows
+            self.update_progress(f"Getting ratings {idx+1}/{total_rows}", progress_pct)
+            
+            # Fetch rating data
+            rating_data = self.get_rating_data(isin)
+            
+            # Initialize result row with all columns
+            result_row = {'ISIN': isin}
+            
+            # Rating columns
+            rating_cols = [
+                'RATING_1', 'CRISIL', 'RATING_2', 'CARE', 'RATING_3', 'ICRA',
+                'RATING_4', 'IND', 'RATING_5', 'ACUITE', 'RATING_6', 'BWR',
+                'RATING_7', 'SMERA', 'RATING_8', 'IVR'
+            ]
+            
+            # Outlook columns
+            outlook_cols = [f'Outlook{i}' for i in range(1, 9)]
+            
+            # Initialize all columns
+            for col in rating_cols + outlook_cols + ['pressReleaseLink', 'dateOfVerification']:
+                result_row[col] = ''
+            
+            press_links = []
+            
+            # Process current ratings
+            if rating_data and 'currentRatings' in rating_data:
+                for rating in rating_data['currentRatings']:
+                    agency_name = rating.get('creditRatingAgencyName', '')
+                    rating_value = rating.get('currentRating', '')
+                    outlook_value = rating.get('outlook', '')
+                    press_link = rating.get('pressReleaseLink', '')
+                    
+                    # Map agency name to short code
+                    short_code = None
+                    for full_name, short_name in self.rating_agency_mapping.items():
+                        if full_name.upper() in agency_name.upper():
+                            short_code = short_name
+                            break
+                    
+                    if short_code and rating_value:
+                        # Assign to appropriate columns
+                        if short_code == 'CRISIL':
+                            result_row['RATING_1'] = rating_value
+                            result_row['CRISIL'] = 'CRISIL'
+                            result_row['Outlook1'] = outlook_value
+                        elif short_code == 'CARE':
+                            result_row['RATING_2'] = rating_value
+                            result_row['CARE'] = 'CARE'
+                            result_row['Outlook2'] = outlook_value
+                        elif short_code == 'ICRA':
+                            result_row['RATING_3'] = rating_value
+                            result_row['ICRA'] = 'ICRA'
+                            result_row['Outlook3'] = outlook_value
+                        elif short_code == 'IND':
+                            result_row['RATING_4'] = rating_value
+                            result_row['IND'] = 'IND'
+                            result_row['Outlook4'] = outlook_value
+                        elif short_code == 'ACUITE':
+                            result_row['RATING_5'] = rating_value
+                            result_row['ACUITE'] = 'ACUITE'
+                            result_row['Outlook5'] = outlook_value
+                        elif short_code == 'BWR':
+                            result_row['RATING_6'] = rating_value
+                            result_row['BWR'] = 'BWR'
+                            result_row['Outlook6'] = outlook_value
+                        elif short_code == 'SMERA':
+                            result_row['RATING_7'] = rating_value
+                            result_row['SMERA'] = 'SMERA'
+                            result_row['Outlook7'] = outlook_value
+                        elif short_code == 'IVR':
+                            result_row['RATING_8'] = rating_value
+                            result_row['IVR'] = 'IVR'
+                            result_row['Outlook8'] = outlook_value
+                        
+                        # Add press release link
+                        if press_link and press_link not in press_links:
+                            press_links.append(press_link)
+            
+            # Combine press release links
+            if press_links:
+                result_row['pressReleaseLink'] = '; '.join(press_links)
+            
+            results.append(result_row)
+            
+            # Rate limiting with random delay
+            time.sleep(delay + random.uniform(0, 0.3))
+        
+        # Create DataFrame with proper column order
+        column_order = ['ISIN'] + rating_cols + outlook_cols + ['pressReleaseLink', 'dateOfVerification']
+        return pd.DataFrame(results, columns=column_order)
+    
+    def generate_matured_restructured(self, df, delay=0.5):
+        """Generate matured/restructured information"""
+        results = []
+        
+        # Find ISIN column
+        isin_col = self.find_column_name(df.columns.tolist(), self.column_patterns['isin'])
+        if not isin_col:
+            st.error("❌ ERROR: No ISIN column found!")
+            return None
+        
+        total_rows = len(df)
+        
+        for idx, row in df.iterrows():
+            isin = str(row[isin_col]).strip()
+            if not isin or isin.lower() == 'nan':
+                continue
+            
+            # Update progress
+            progress_pct = (idx + 1) / total_rows
+            self.update_progress(f"Checking status {idx+1}/{total_rows}", progress_pct)
+            
+            # Fetch data
+            data = self.get_matured_restructured_data(isin)
+            
+            status = ''
+            new_isin = ''
+            
+            if data:
+                # Check if ISIN is null (matured)
+                if data.get('isin') is None:
+                    status = 'MATURED'
+                # Check if restructured
+                elif data.get('restructuredStatus') == 'Y':
+                    status = 'RESTRUCTURED'
+                    new_isin = data.get('newIsin', '')
+                else:
+                    status = 'ACTIVE'
+            
+            results.append({
+                'ISIN': isin,
+                'Matured/Restructured': status,
+                'NewISIN': new_isin
+            })
+            
+            # Rate limiting with random delay
+            time.sleep(delay + random.uniform(0, 0.3))
+        
+        return pd.DataFrame(results)
 
 # Helper functions for file downloads
 def get_download_link(df, filename, file_label="Excel file"):
@@ -700,7 +926,7 @@ def get_download_link(df, filename, file_label="Excel file"):
         mime_type = 'text/csv'
     
     b64 = base64.b64encode(towrite.read()).decode()
-    href = f'<a href="data:{mime_type};base64,{b64}" download="{filename}" style="text-decoration: none; color: white; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 12px 24px; border-radius: 8px; font-weight: bold; border: 2px solid white; display: inline-block; margin: 5px;">📥 {file_label}</a>'
+    href = f'<a href="data:{mime_type};base64,{b64}" download="{filename}" style="text-decoration: none; color: white; background: #4CAF50; padding: 10px 20px; border-radius: 5px; font-weight: bold;">📥 {file_label}</a>'
     return href
 
 def create_zip_file(files_dict):
@@ -721,70 +947,81 @@ def create_zip_file(files_dict):
 
 # Main Streamlit app
 def main():
-    # Header with BADDIE branding
+    # NSDL Scraping Features Section
     st.markdown("""
-    <div class="main-header">
-        <div class="logo-header">
-            <div class="logo-circle">B</div>
-            <div>
-                <h1 class="app-title">BADDIE - ETL</h1>
-                <p class="app-subtitle">Bond Analytics & Data DEbt Intelligence Engine</p>
-                <div class="funny-tagline">😏 Making bond analysis cool again!</div>
-            </div>
-        </div>
+    <div class="feature-card">
+        <h4>🔧 NSDL Scraping Features:</h4>
+        <ul style="font-size: 16px; line-height: 1.6;">
+            <li><strong>Extracts data from NSDL APIs in real-time</strong> - Fetches live bond information</li>
+            <li><strong>Formats dates to DD-MMM-YYYY</strong> - Standardized date formatting</li>
+            <li><strong>Handles multiple ISINs simultaneously</strong> - Process batch files efficiently</li>
+            <li><strong>Provides comprehensive bond analytics</strong> - 80+ data points per bond</li>
+            <li><strong>Export to CSV, Excel, or JSON formats</strong> - Flexible output options</li>
+        </ul>
     </div>
     """, unsafe_allow_html=True)
     
-    # Funny full form display
-    st.markdown("""
-    <div class="fullform-box">
-        <h3 style="color: #1e40af; margin: 0;">🎯 BADDIE = <span style="color: #3b82f6;">B</span>ond <span style="color: #3b82f6;">A</span>nalytics & <span style="color: #3b82f6;">D</span>ata <span style="color: #3b82f6;">D</span>Ebt <span style="color: #3b82f6;">I</span>ntelligence <span style="color: #3b82f6;">E</span>ngine</h3>
-        <p style="color: #6b7280; margin-top: 10px; font-style: italic;">Because regular bond analysis was too mainstream! 😎</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Sidebar with DARK TEXT
+    # Sidebar
     with st.sidebar:
         st.markdown("### ⚙️ Settings")
         
-        st.markdown("#### 📊 Data Extraction:")
-        st.info("Extracts 80+ bond parameters from NSDL APIs in real-time")
+        st.markdown("#### Select Operations:")
+        do_comprehensive = st.checkbox("📊 Comprehensive Bond Data Extraction", value=True,
+                                      help="Extract 80+ bond parameters from NSDL APIs")
+        do_comparison = st.checkbox("🔍 Column Comparison", value=False, 
+                                    help="Compare file data with NSDL API data")
+        do_ratings = st.checkbox("⭐ Rating Generation", value=False,
+                                help="Fetch credit ratings for each ISIN")
+        do_matured = st.checkbox("📅 Matured/Restructured Check", value=False,
+                                help="Check if bonds are matured or restructured")
         
         st.markdown("---")
         
         st.markdown("#### ⚡ Rate Limiting")
         delay = st.slider("Delay between API calls (seconds)", 
-                        0.5, 3.0, 1.0, 0.1,
-                        help="Increase if getting rate limited")
+                        0.5, 5.0, 1.0, 0.1,
+                        help="Increase if getting rate limited (2-3 seconds recommended for cloud)")
         
         st.markdown("---")
         
         st.markdown("#### 📋 Supported File Formats")
         st.info("""
-        **Excel**: .xlsx, .xls  
-        **CSV**: .csv  
+        - **Excel**: .xlsx, .xls
+        - **CSV**: .csv
         
-        **Required column**: ISIN (or isin)  
+        **Required column**: ISIN (or isin)
         
-        **Output includes**:  
-        • Basic Bond Information  
-        • Coupon & Interest Details  
-        • Redemption Information  
-        • Rating & Credit Details  
-        • Security & Guarantee Details  
-        • Covenant Information  
+        **Comprehensive extraction includes**:
+        - Basic Bond Information
+        - Coupon & Interest Details
+        - Redemption Information
+        - Rating & Credit Details
+        - Security & Guarantee Details
+        - Covenant Information
         """)
         
         st.markdown("---")
         
         st.markdown("#### 🔗 NSDL APIs Used")
         st.markdown("""
-        1. `/isins` - Basic ISIN info  
-        2. `/instruments` - Instrument details  
-        3. `/coupondetail` - Coupon information  
-        4. `/redemptions` - Redemption details  
-        5. `/listings` - Listing information  
-        6. `/credit-ratings` - Rating information  
+        1. `/isins` - Basic ISIN info
+        2. `/instruments` - Instrument details
+        3. `/coupondetail` - Coupon information
+        4. `/redemptions` - Redemption details
+        5. `/listings` - Listing information
+        6. `/credit-ratings` - Rating information
+        """)
+        
+        st.markdown("---")
+        
+        st.markdown("#### ⏱️ Processing Time")
+        st.warning("""
+        Processing time depends on:
+        - Number of ISINs (≈2-3 seconds each for cloud)
+        - Selected operations
+        - Internet speed
+        
+        **Example**: 100 ISINs ≈ 5-10 minutes
         """)
     
     # Main content area
@@ -792,28 +1029,11 @@ def main():
     
     with col1:
         # File upload
-        st.markdown("### 📤 Upload Bond Data File")
-        
         uploaded_file = st.file_uploader(
-            "**Choose your Excel or CSV file**",
+            "📁 Upload your Excel or CSV file",
             type=['xlsx', 'xls', 'csv'],
-            help="File should contain ISIN column. The app will automatically detect ISIN numbers.",
-            key="file_uploader"
+            help="File should contain ISIN column"
         )
-        
-        # Features section
-        st.markdown("""
-        <div class="feature-card">
-            <h4>🔧 Features:</h4>
-            <ul class="feature-list">
-                <li><strong>Extracts data from NSDL APIs in real-time</strong> - Fetches live bond information from multiple endpoints</li>
-                <li><strong>Formats dates to DD-MMM-YYYY</strong> - Standardized date formatting across all outputs</li>
-                <li><strong>Handles multiple ISINs simultaneously</strong> - Process batch files efficiently with progress tracking</li>
-                <li><strong>Provides comprehensive bond analytics</strong> - 80+ data points per bond including ratings, covenants, and security details</li>
-                <li><strong>Export to CSV, Excel, or JSON formats</strong> - Flexible output options for further analysis</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
         
         if uploaded_file:
             try:
@@ -830,90 +1050,103 @@ def main():
                 with st.expander("👀 Preview first 5 rows"):
                     st.dataframe(df.head(), use_container_width=True)
                 
-                # Find ISIN column
-                isin_columns = [col for col in df.columns if 'isin' in col.lower()]
-                
-                if not isin_columns:
-                    st.error("❌ No ISIN column found. Please ensure your file has a column named 'ISIN' or 'isin'.")
-                else:
-                    isin_column = isin_columns[0]
-                    isins = df[isin_column].dropna().unique().tolist()
+                # Process button
+                if st.button("🚀 Start Processing", type="primary", use_container_width=True):
+                    # Create progress elements
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
                     
-                    st.success(f"✅ Found **{len(isins)}** unique ISINs in the uploaded file.")
+                    # Create analyzer instance
+                    analyzer = NSDLBondAnalyzer(progress_bar, status_text)
                     
-                    # Process button
-                    if st.button("🚀 Extract Bond Data from NSDL", type="primary", use_container_width=True):
-                        # Create progress elements
-                        progress_bar = st.progress(0)
-                        status_text = st.empty()
+                    # Dictionary to store results
+                    results = {}
+                    
+                    # Perform selected operations
+                    if do_comprehensive:
+                        with st.spinner("📊 Extracting comprehensive bond data..."):
+                            comprehensive_df = analyzer.extract_comprehensive_batch(df, delay)
+                            if comprehensive_df is not None and not comprehensive_df.empty:
+                                results['Comprehensive_Bond_Data'] = comprehensive_df
+                    
+                    if do_comparison:
+                        with st.spinner("🔍 Performing column comparison..."):
+                            comparison_df = analyzer.perform_comparison(df, delay)
+                            if comparison_df is not None and not comparison_df.empty:
+                                results['Comparison'] = comparison_df
+                    
+                    if do_ratings:
+                        with st.spinner("⭐ Fetching credit ratings..."):
+                            ratings_df = analyzer.generate_ratings(df, delay)
+                            if ratings_df is not None and not ratings_df.empty:
+                                results['CurrentRating'] = ratings_df
+                    
+                    if do_matured:
+                        with st.spinner("📅 Checking matured/restructured status..."):
+                            matured_df = analyzer.generate_matured_restructured(df, delay)
+                            if matured_df is not None and not matured_df.empty:
+                                results['MaturedRestructured'] = matured_df
+                    
+                    # Complete progress
+                    progress_bar.progress(1.0)
+                    status_text.text("✅ Processing complete!")
+                    
+                    # Display results
+                    if results:
+                        st.markdown("---")
+                        st.markdown("## 📋 Results")
                         
-                        # Create analyzer instance
-                        analyzer = NSDLBondAnalyzer(progress_bar, status_text)
+                        # Display statistics
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Total ISINs Processed", len(df))
+                        with col2:
+                            st.metric("Operations Completed", len(results))
+                        with col3:
+                            st.metric("Total Time", f"~{len(df)*delay*len(results)/60:.1f} min")
                         
-                        # Process ISINs
-                        with st.spinner("🔍 Extracting bond data from NSDL..."):
-                            result_df = analyzer.process_isins(isins, delay)
-                        
-                        # Complete progress
-                        progress_bar.progress(1.0)
-                        status_text.text("✅ Data extraction complete!")
-                        
-                        # Display results
-                        if not result_df.empty:
-                            st.markdown("---")
-                            st.markdown("## 📊 Extracted Bond Data")
-                            
-                            # Display statistics
-                            col_stat1, col_stat2, col_stat3 = st.columns(3)
-                            with col_stat1:
-                                st.metric("Total ISINs Processed", len(isins))
-                            with col_stat2:
-                                st.metric("Columns Extracted", len(result_df.columns))
-                            with col_stat3:
-                                st.metric("Data Points", f"{len(isins) * len(result_df.columns):,}")
-                            
-                            # Show data
-                            st.dataframe(result_df, use_container_width=True, height=400)
-                            
-                            # Download section
-                            st.markdown("---")
-                            st.markdown("## 💾 Download Results")
-                            
-                            # Individual downloads
-                            st.markdown("### Download Formats:")
-                            col_dl1, col_dl2, col_dl3 = st.columns(3)
-                            
-                            with col_dl1:
-                                st.markdown(get_download_link(
-                                    result_df,
-                                    f"BADDIE_Bond_Data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                                    "Download Excel"
-                                ), unsafe_allow_html=True)
-                            
-                            with col_dl2:
-                                st.markdown(get_download_link(
-                                    result_df,
-                                    f"BADDIE_Bond_Data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                                    "Download CSV"
-                                ), unsafe_allow_html=True)
-                            
-                            with col_dl3:
-                                json_str = result_df.to_json(orient='records', indent=2)
-                                json_b64 = base64.b64encode(json_str.encode()).decode()
-                                href = f'<a href="data:application/json;base64,{json_b64}" download="BADDIE_Bond_Data_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json" style="text-decoration: none; color: white; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 12px 24px; border-radius: 8px; font-weight: bold; border: 2px solid white; display: inline-block; margin: 5px;">📥 Download JSON</a>'
-                                st.markdown(href, unsafe_allow_html=True)
-                            
-                            # Success message
-                            st.balloons()
-                            st.markdown("""
-                            <div class="success-box">
-                                <h4>🎉 Bond data extraction completed successfully!</h4>
-                                <p>All 80+ bond parameters have been extracted from NSDL APIs and are ready for download.</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
+                        # Create tabs for each result
+                        if len(results) > 1:
+                            tabs = st.tabs(list(results.keys()))
+                            for tab, (sheet_name, result_df) in zip(tabs, results.items()):
+                                with tab:
+                                    st.dataframe(result_df, use_container_width=True, height=300)
+                                    st.markdown(f"**Rows:** {len(result_df)}")
                         else:
-                            st.warning("⚠️ No data extracted. Please check if your file contains valid ISINs.")
+                            for sheet_name, result_df in results.items():
+                                st.dataframe(result_df, use_container_width=True, height=400)
+                        
+                        # Download section
+                        st.markdown("---")
+                        st.markdown("## 💾 Download Results")
+                        
+                        # Individual downloads
+                        st.markdown("### Individual Files:")
+                        cols = st.columns(min(3, len(results)))
+                        
+                        for idx, (sheet_name, result_df) in enumerate(results.items()):
+                            with cols[idx % 3]:
+                                st.markdown(f"**{sheet_name}**")
+                                st.markdown(get_download_link(
+                                    result_df,
+                                    f"BADDIE_{sheet_name}.xlsx",
+                                    f"Download {sheet_name}"
+                                ), unsafe_allow_html=True)
+                        
+                        # Combined ZIP download
+                        if len(results) > 1:
+                            st.markdown("### Combined Download:")
+                            zip_buffer = create_zip_file(results)
+                            b64 = base64.b64encode(zip_buffer.getvalue()).decode()
+                            href = f'<a href="data:application/zip;base64,{b64}" download="BADDIE_Results.zip" style="text-decoration: none; color: white; background: #2196F3; padding: 12px 24px; border-radius: 5px; font-weight: bold;">📦 Download All Results (ZIP)</a>'
+                            st.markdown(href, unsafe_allow_html=True)
+                        
+                        # Success message
+                        st.balloons()
+                        st.markdown('<div class="success-box">🎉 All operations completed successfully! Your files are ready for download.</div>', unsafe_allow_html=True)
+                    
+                    else:
+                        st.warning("⚠️ No results generated. Please check if your file contains valid ISINs.")
             
             except Exception as e:
                 st.error(f"❌ Error processing file: {str(e)}")
@@ -924,8 +1157,11 @@ def main():
         st.markdown("### 📝 Sample Input Format")
         
         sample_data = pd.DataFrame({
-            'ISIN': ['INE752E08767', 'INE139F07089', 'INE722A07BE8'],
-            'Issuer_Name': ['Power Grid Corporation', 'Example Corp 1', 'Example Corp 2']
+            'ISIN': ['INE002A08567', 'INE002Z08044', 'INE003L07184'],
+            'SENIORITY': ['Secured', 'Unsecured', 'Secured'],
+            'Coupon_fixed': ['8.65', 'N.A', '7.5'],
+            'Issue Price': [100, 100, 100],
+            'Face Value': [100, 100, 100]
         })
         
         st.dataframe(sample_data, use_container_width=True)
@@ -933,37 +1169,36 @@ def main():
         st.markdown("### 🔄 How It Works")
         
         steps = [
-            "1. **Upload** your Excel/CSV file with ISINs",
-            "2. **Set** delay between API calls (0.5-3 seconds)",
-            "3. **Click** 'Extract Bond Data from NSDL'",
+            "1. **Upload** your Excel/CSV file",
+            "2. **Select** operations to perform",
+            "3. **Click** Start Processing",
             "4. **Wait** for progress to complete",
-            "5. **View** extracted bond data",
-            "6. **Download** in Excel, CSV, or JSON"
+            "5. **View** results in browser",
+            "6. **Download** files as needed"
         ]
         
         for step in steps:
             st.markdown(f"- {step}")
         
-        st.markdown("### 📊 Output Columns Preview")
+        st.markdown("### 📊 Comprehensive Output Includes")
         st.info("""
-        **Key sections extracted:**
-        • ✅ Basic Bond Information  
-        • ✅ Coupon & Interest Details  
-        • ✅ Redemption Information  
-        • ✅ Rating & Credit Details  
-        • ✅ Security & Guarantee Details  
-        • ✅ Covenant Information  
-        • ✅ NSDL Verification Status  
+        **80+ Bond Parameters:**
+        • Basic Bond Information  
+        • Coupon & Interest Details  
+        • Redemption Information  
+        • Rating & Credit Details  
+        • Security & Guarantee Details  
+        • Covenant Information  
+        • NSDL Verification Status  
         """)
         
         st.markdown("### ⚠️ Important Notes")
         st.warning("""
-        • NSDL APIs may have rate limits  
-        • Processing time depends on number of ISINs  
-        • Some bonds may not have all data fields  
-        • Keep browser open during processing  
-        • For large files: Use 1-2 second delay  
-        • All dates formatted as DD-MMM-YYYY  
+        - NSDL API may block cloud IPs (use Railway for better results)
+        - Some ISINs might not be found in NSDL
+        - Processing large files may take time
+        - Keep browser open during processing
+        - For cloud: Use 2-3 second delay between calls
         """)
 
 # Run the app
