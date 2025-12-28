@@ -27,7 +27,7 @@ st.markdown("""
 <style>
     /* BADDIE Branding Header */
     .baddie-header {
-        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        background: linear-gradient(135deg, #93c5fd 0%, #93c5fd 100%);
         color: white;
         padding: 2rem;
         border-radius: 10px;
@@ -61,7 +61,7 @@ st.markdown("""
     
     /* Blue/White upload button */
     .upload-btn {
-        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        background: linear-gradient(135deg, #ffffff 0%, #93c5fd 100%);
         color: white;
         border: 2px solid white;
         padding: 12px 30px;
@@ -96,9 +96,9 @@ st.markdown("""
     }
     .success-box {
         padding: 20px;
-        background-color: #d4edda;
+        background-color: #064e3b;
         border-radius: 10px;
-        border-left: 5px solid #28a745;
+        border-left: 5px solid #22c55e;
         margin: 10px 0;
     }
     
@@ -109,12 +109,12 @@ st.markdown("""
         padding: 1.5rem;
         margin: 1rem 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-left: 4px solid #3b82f6;
+        border-left: 4px solid #93c5fd;
     }
     
     /* Make all text visible */
     body {
-        color: #1e293b !important;
+        color: #f8fafc !important;
     }
     
     .stMarkdown, .stText, .stInfo, .stWarning, .stSuccess, .stError {
@@ -122,14 +122,14 @@ st.markdown("""
     }
     
     section[data-testid="stSidebar"] * {
-        color: #1e293b !important;
+         color: #e5e7eb !important;
     }
     
     /* Logo placeholder */
     .logo-circle {
         width: 60px;
         height: 60px;
-        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        background: linear-gradient(135deg, #93c5fd, #8b5cf6);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -158,8 +158,8 @@ st.markdown("""
 
 # Funny full form display
 st.markdown("""
-<div style="text-align: center; margin: 20px 0; padding: 15px; background: #f0f9ff; border-radius: 10px; border: 2px solid #e0f2fe;">
-    <h4 style="color: #1e40af; margin: 0;">🎯 BADDIE = <span style="color: #3b82f6;">B</span>ond <span style="color: #3b82f6;">A</span>nalytics & <span style="color: #3b82f6;">D</span>ata <span style="color: #3b82f6;">D</span>Ebt <span style="color: #3b82f6;">I</span>ntelligence <span style="color: #3b82f6;">E</span>ngine</h4>
+<div style="text-align: center; margin: 20px 0; padding: 15px; background: #0A192; border-radius: 10px; border: 2px solid #ffffff;">
+    <h4 style="color: #ffffff; margin: 0;">🎯 BADDIE = <span style="color: #93c5fd;">B</span>ond <span style="color: #93c5fd;">A</span>nalytics & <span style="color: #93c5fd;">D</span>ata <span style="color: #93c5fd;">D</span>Ebt <span style="color: #93c5fd;">I</span>ntelligence <span style="color: #93c5fd;">E</span>ngine</h4>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1204,3 +1204,4 @@ def main():
 # Run the app
 if __name__ == "__main__":
     main()
+
