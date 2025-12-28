@@ -118,7 +118,7 @@ st.markdown("""
     }
     
     .stMarkdown, .stText, .stInfo, .stWarning, .stSuccess, .stError {
-        color: #1e293b !important;
+        color: #e5e7eb !important;
     }
     
     section[data-testid="stSidebar"] * {
