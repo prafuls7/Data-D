@@ -22,7 +22,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS with BADDIE theme
+# Custom CSS with BADDIE theme - FIXED FOR TEXT VISIBILITY
 st.markdown("""
 <style>
     /* Main theme colors */
@@ -31,16 +31,38 @@ st.markdown("""
         --secondary-blue: #3b82f6;
         --light-blue: #eff6ff;
         --accent-color: #8b5cf6;
+        --dark-text: #1e293b;
+        --medium-text: #475569;
     }
     
+    /* Main app background */
     .stApp {
-       background-color: #112240;
+        background-color: #ffffff;
+    }
+    
+    /* Ensure all text is visible */
+    body {
+        color: #1e293b !important;
+    }
+    
+    /* Make Streamlit default text dark */
+    .stMarkdown, .stText, .stInfo, .stWarning, .stSuccess, .stError {
+        color: #1e293b !important;
+    }
+    
+    /* Sidebar text */
+    section[data-testid="stSidebar"] * {
+        color: #1e293b !important;
+    }
+    
+    section[data-testid="stSidebar"] .stMarkdown {
+        color: #1e293b !important;
     }
     
     /* Header styling */
     .main-header {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        color: white;
+        color: white !important;
         padding: 2rem;
         border-radius: 15px;
         margin-bottom: 2rem;
@@ -62,6 +84,7 @@ st.markdown("""
         margin-bottom: 0.5rem;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        color: white !important;
     }
     
     .app-subtitle {
@@ -69,6 +92,7 @@ st.markdown("""
         opacity: 0.95;
         font-style: italic;
         margin-bottom: 10px;
+        color: rgba(255, 255, 255, 0.9) !important;
     }
     
     .funny-tagline {
@@ -79,6 +103,7 @@ st.markdown("""
         font-weight: bold;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255,255,255,0.2);
+        color: white !important;
     }
     
     /* Upload button styling - Blue/White theme */
@@ -106,7 +131,7 @@ st.markdown("""
     
     .stButton > button {
         background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-        color: white;
+        color: white !important;
         border: none;
         padding: 12px 28px;
         border-radius: 8px;
@@ -134,6 +159,11 @@ st.markdown("""
         border-left: 6px solid #3b82f6;
         margin: 20px 0;
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        color: #1e293b !important;
+    }
+    
+    .success-box h4, .success-box p {
+        color: #1e293b !important;
     }
     
     /* Feature cards */
@@ -144,6 +174,11 @@ st.markdown("""
         margin: 20px 0;
         box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         border-top: 4px solid #3b82f6;
+        color: #1e293b !important;
+    }
+    
+    .feature-card h4, .feature-card li, .feature-card strong {
+        color: #1e293b !important;
     }
     
     /* Data table styling */
@@ -154,14 +189,22 @@ st.markdown("""
         border: 1px solid #e5e7eb;
     }
     
-    /* Sidebar styling */
+    /* Sidebar styling - FIXED FOR VISIBILITY */
     section[data-testid="stSidebar"] {
-        background-color: #f8fafc;
+        background-color: #f8fafc !important;
+        border-right: 1px solid #e5e7eb;
     }
     
-    .css-1d391kg {
-        background-color: #f8fafc;
-        border-right: 1px solid #e5e7eb;
+    /* Sidebar text specifically */
+    [data-testid="stSidebar"] .stMarkdown,
+    [data-testid="stSidebar"] .stMarkdown h1,
+    [data-testid="stSidebar"] .stMarkdown h2,
+    [data-testid="stSidebar"] .stMarkdown h3,
+    [data-testid="stSidebar"] .stMarkdown h4,
+    [data-testid="stSidebar"] .stMarkdown p,
+    [data-testid="stSidebar"] .stMarkdown li,
+    [data-testid="stSidebar"] .stMarkdown code {
+        color: #1e293b !important;
     }
     
     /* Info boxes */
@@ -171,6 +214,11 @@ st.markdown("""
         padding: 20px;
         margin: 15px 0;
         border: 2px solid #e0f2fe;
+        color: #1e293b !important;
+    }
+    
+    .info-box h4, .info-box li, .info-box ol, .info-box strong {
+        color: #1e293b !important;
     }
     
     /* Feature list styling */
@@ -179,6 +227,7 @@ st.markdown("""
         line-height: 1.7;
         margin-bottom: 10px;
         padding-left: 5px;
+        color: #1e293b !important;
     }
     
     /* Funny full form display */
@@ -190,6 +239,11 @@ st.markdown("""
         margin: 25px auto;
         max-width: 700px;
         border: 2px dashed #3b82f6;
+        color: #1e293b !important;
+    }
+    
+    .fullform-box h3, .fullform-box p {
+        color: #1e293b !important;
     }
     
     /* Logo styling */
@@ -201,10 +255,45 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: white !important;
         font-weight: bold;
         font-size: 24px;
         box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* Streamlit info, warning, success boxes */
+    .stAlert, .stInfo, .stWarning, .stSuccess, .stError {
+        color: #1e293b !important;
+    }
+    
+    /* Make sure all headings are visible */
+    h1, h2, h3, h4, h5, h6 {
+        color: #1e293b !important;
+    }
+    
+    /* Make sure all paragraphs and list items are visible */
+    p, li, span, div {
+        color: #1e293b !important;
+    }
+    
+    /* Fix slider text */
+    .stSlider label {
+        color: #1e293b !important;
+    }
+    
+    /* Fix checkbox text */
+    .stCheckbox label {
+        color: #1e293b !important;
+    }
+    
+    /* Fix uploader text */
+    .stFileUploader label {
+        color: #1e293b !important;
+    }
+    
+    /* Make metric values visible */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+        color: #1e293b !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -222,7 +311,7 @@ class NSDLBondAnalyzer:
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("https://", adapter)
-        self.session.mount("http://", adapter)  # FIXED: Added missing quote
+        self.session.mount("http://", adapter)
         
         # User-Agents
         self.user_agents = [
@@ -654,7 +743,7 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar
+    # Sidebar with DARK TEXT
     with st.sidebar:
         st.markdown("### ⚙️ Settings")
         
@@ -672,30 +761,30 @@ def main():
         
         st.markdown("#### 📋 Supported File Formats")
         st.info("""
-        **Excel**: .xlsx, .xls
-        **CSV**: .csv
+        **Excel**: .xlsx, .xls  
+        **CSV**: .csv  
         
-        **Required column**: ISIN (or isin)
+        **Required column**: ISIN (or isin)  
         
-        **Output includes**:
-        - Basic Bond Information
-        - Coupon & Interest Details
-        - Redemption Information
-        - Rating & Credit Details
-        - Security & Guarantee Details
-        - Covenant Information
+        **Output includes**:  
+        • Basic Bond Information  
+        • Coupon & Interest Details  
+        • Redemption Information  
+        • Rating & Credit Details  
+        • Security & Guarantee Details  
+        • Covenant Information  
         """)
         
         st.markdown("---")
         
         st.markdown("#### 🔗 NSDL APIs Used")
         st.markdown("""
-        1. `/isins` - Basic ISIN info
-        2. `/instruments` - Instrument details
-        3. `/coupondetail` - Coupon information
-        4. `/redemptions` - Redemption details
-        5. `/listings` - Listing information
-        6. `/credit-ratings` - Rating information
+        1. `/isins` - Basic ISIN info  
+        2. `/instruments` - Instrument details  
+        3. `/coupondetail` - Coupon information  
+        4. `/redemptions` - Redemption details  
+        5. `/listings` - Listing information  
+        6. `/credit-ratings` - Rating information  
         """)
     
     # Main content area
@@ -858,26 +947,25 @@ def main():
         st.markdown("### 📊 Output Columns Preview")
         st.info("""
         **Key sections extracted:**
-        - ✅ Basic Bond Information
-        - ✅ Coupon & Interest Details  
-        - ✅ Redemption Information
-        - ✅ Rating & Credit Details
-        - ✅ Security & Guarantee Details
-        - ✅ Covenant Information
-        - ✅ NSDL Verification Status
+        • ✅ Basic Bond Information  
+        • ✅ Coupon & Interest Details  
+        • ✅ Redemption Information  
+        • ✅ Rating & Credit Details  
+        • ✅ Security & Guarantee Details  
+        • ✅ Covenant Information  
+        • ✅ NSDL Verification Status  
         """)
         
         st.markdown("### ⚠️ Important Notes")
         st.warning("""
-        - NSDL APIs may have rate limits
-        - Processing time depends on number of ISINs
-        - Some bonds may not have all data fields
-        - Keep browser open during processing
-        - For large files: Use 1-2 second delay
-        - All dates formatted as DD-MMM-YYYY
+        • NSDL APIs may have rate limits  
+        • Processing time depends on number of ISINs  
+        • Some bonds may not have all data fields  
+        • Keep browser open during processing  
+        • For large files: Use 1-2 second delay  
+        • All dates formatted as DD-MMM-YYYY  
         """)
 
 # Run the app
 if __name__ == "__main__":
     main()
-
