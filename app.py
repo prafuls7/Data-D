@@ -19,125 +19,298 @@ warnings.filterwarnings('ignore')
 st.set_page_config(
     page_title="BADDIE - ETL | Bond Analytics",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# Custom CSS with BADDIE branding
+# Custom CSS with BADDIE branding - DARK THEME
 st.markdown("""
 <style>
+    /* DARK THEME */
+    .stApp {
+        background-color: #0f172a;
+    }
+    
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    
     /* BADDIE Branding Header */
     .baddie-header {
-        background: linear-gradient(135deg, #93c5fd 0%, #93c5fd 100%);
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
         color: white;
         padding: 2rem;
-        border-radius: 10px;
+        border-radius: 15px;
         margin-bottom: 2rem;
         text-align: center;
-        box-shadow: 0 4px 20px rgba(30, 58, 138, 0.2);
+        box-shadow: 0 8px 32px rgba(30, 58, 138, 0.4);
+        border: 1px solid #3b82f6;
     }
     
     .baddie-title {
-        font-size: 2.8rem;
+        font-size: 3.2rem;
         font-weight: 900;
         margin-bottom: 0.5rem;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(90deg, #60a5fa, #93c5fd, #bfdbfe);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     
     .baddie-subtitle {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         opacity: 0.95;
-        font-style: italic;
+        font-weight: 300;
         margin-bottom: 10px;
+        color: #dbeafe;
     }
     
     .funny-fullform {
-        background: rgba(255, 255, 255, 0.15);
-        padding: 10px 20px;
-        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 12px 24px;
+        border-radius: 25px;
         display: inline-block;
-        font-weight: bold;
-        margin-top: 10px;
-    }
-    
-    /* Blue/White upload button */
-    .upload-btn {
-        background: linear-gradient(135deg, #ffffff 0%, #93c5fd 100%);
-        color: white;
-        border: 2px solid white;
-        padding: 12px 30px;
-        border-radius: 8px;
-        font-size: 16px;
         font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(30, 64, 175, 0.2);
+        margin-top: 10px;
+        color: #93c5fd;
+        border: 1px solid rgba(147, 197, 253, 0.3);
+        backdrop-filter: blur(10px);
     }
     
-    .upload-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(30, 64, 175, 0.3);
-    }
-    
-    /* Original styling kept intact */
-    .stProgress > div > div > div > div {
-        background-color: #4CAF50;
-    }
-    .stButton > button {
-        width: 100%;
-        background: linear-gradient(45deg, #4CAF50, #2E7D32);
-        color: white;
-        border: none;
-        padding: 12px;
-        border-radius: 8px;
-        font-weight: bold;
-    }
-    .stButton > button:hover {
-        background: linear-gradient(45deg, #388E3C, #1B5E20);
-    }
-    .success-box {
-        padding: 20px;
-        background-color: #064e3b;
-        border-radius: 10px;
-        border-left: 5px solid #22c55e;
-        margin: 10px 0;
-    }
-    
-    /* Feature card for NSDL scraping */
+    /* DARK CARDS */
     .feature-card {
-        background: white;
-        border-radius: 10px;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 12px;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-left: 4px solid #93c5fd;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        border-left: 4px solid #3b82f6;
+        border: 1px solid #334155;
     }
     
-    /* Make all text visible */
-    body {
-        color: #f8fafc !important;
+    .info-box {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border: 1px solid #334155;
+        border-left: 4px solid #10b981;
     }
     
-    .stMarkdown, .stText, .stInfo, .stWarning, .stSuccess, .stError {
-        color: #e5e7eb !important;
+    /* Buttons */
+    .stButton > button {
+        width: 100%;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+    
+    /* Progress bar */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd);
+    }
+    
+    /* Success box */
+    .success-box {
+        padding: 20px;
+        background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+        border-radius: 12px;
+        border-left: 4px solid #10b981;
+        margin: 10px 0;
+        border: 1px solid #065f46;
+        color: #d1fae5;
+    }
+    
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #0f172a;
+        border-right: 1px solid #334155;
     }
     
     section[data-testid="stSidebar"] * {
-         color: #e5e7eb !important;
+        color: #e2e8f0 !important;
     }
     
-    /* Logo placeholder */
+    /* Text colors */
+    h1, h2, h3, h4, h5, h6 {
+        color: #f1f5f9 !important;
+    }
+    
+    p, li, span, div {
+        color: #cbd5e1 !important;
+    }
+    
+    .stMarkdown {
+        color: #cbd5e1 !important;
+    }
+    
+    /* File uploader */
+    .stFileUploader > div > div {
+        background-color: #1e293b;
+        border: 2px dashed #475569;
+        border-radius: 10px;
+    }
+    
+    /* Dataframe styling */
+    .dataframe {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+    }
+    
+    /* Logo */
     .logo-circle {
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, #93c5fd, #8b5cf6);
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
         font-weight: bold;
-        font-size: 20px;
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        font-size: 24px;
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #1e293b;
+        border-radius: 10px;
+        padding: 5px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        color: #94a3b8;
+        background-color: #1e293b;
+        border-radius: 8px;
+        margin: 2px;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        color: #f8fafc !important;
+        font-weight: bold;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        color: #94a3b8 !important;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background-color: #1e293b;
+        color: #f1f5f9 !important;
+        border: 1px solid #334155;
+        border-radius: 8px;
+    }
+    
+    /* Checkbox */
+    .stCheckbox > label {
+        color: #e2e8f0 !important;
+    }
+    
+    /* Slider */
+    .stSlider > div > div > div {
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    }
+    
+    /* Download links */
+    .download-btn {
+        display: inline-block;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        margin: 5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .download-btn-blue {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .download-btn-blue:hover {
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+    
+    /* Warning/Info boxes */
+    .stAlert {
+        background-color: #1e293b;
+        border: 1px solid #475569;
+        border-radius: 10px;
+    }
+    
+    /* Sample table */
+    .sample-table {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 10px;
+        padding: 1rem;
+        border: 1px solid #334155;
+    }
+    
+    /* Steps */
+    .steps-container {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #334155;
+        margin: 1rem 0;
+    }
+    
+    .step-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 8px;
+        border-left: 3px solid #3b82f6;
+    }
+    
+    .step-number {
+        background: #3b82f6;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -145,21 +318,21 @@ st.markdown("""
 # BADDIE Header
 st.markdown("""
 <div class="baddie-header">
-    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px;">
         <div class="logo-circle">B</div>
         <div>
             <h1 class="baddie-title">BADDIE - ETL</h1>
             <p class="baddie-subtitle">Bond Analytics & Data DEbt Intelligence Engine</p>
         </div>
     </div>
-    <div class="funny-fullform">😏 Making bond analysis cool since today!</div>
+    <div class="funny-fullform">⚡ Making bond analysis smarter & faster!</div>
 </div>
 """, unsafe_allow_html=True)
 
 # Funny full form display
 st.markdown("""
-<div style="text-align: center; margin: 20px 0; padding: 15px; background: #0A192; border-radius: 10px; border: 2px solid #ffffff;">
-    <h4 style="color: #ffffff; margin: 0;">🎯 BADDIE = <span style="color: #93c5fd;">B</span>ond <span style="color: #93c5fd;">A</span>nalytics & <span style="color: #93c5fd;">D</span>ata <span style="color: #93c5fd;">D</span>Ebt <span style="color: #93c5fd;">I</span>ntelligence <span style="color: #93c5fd;">E</span>ngine</h4>
+<div style="text-align: center; margin: 20px 0; padding: 15px; background: rgba(30, 41, 59, 0.8); border-radius: 12px; border: 1px solid #334155; backdrop-filter: blur(10px);">
+    <h4 style="color: #93c5fd; margin: 0; font-weight: 600;">🎯 BADDIE = <span style="color: #60a5fa;">B</span>ond <span style="color: #60a5fa;">A</span>nalytics & <span style="color: #60a5fa;">D</span>ata <span style="color: #60a5fa;">D</span>Ebt <span style="color: #60a5fa;">I</span>ntelligence <span style="color: #60a5fa;">E</span>ngine</h4>
 </div>
 """, unsafe_allow_html=True)
 
@@ -926,7 +1099,7 @@ def get_download_link(df, filename, file_label="Excel file"):
         mime_type = 'text/csv'
     
     b64 = base64.b64encode(towrite.read()).decode()
-    href = f'<a href="data:{mime_type};base64,{b64}" download="{filename}" style="text-decoration: none; color: white; background: #4CAF50; padding: 10px 20px; border-radius: 5px; font-weight: bold;">📥 {file_label}</a>'
+    href = f'<a class="download-btn" href="data:{mime_type};base64,{b64}" download="{filename}">📥 {file_label}</a>'
     return href
 
 def create_zip_file(files_dict):
@@ -950,8 +1123,8 @@ def main():
     # NSDL Scraping Features Section
     st.markdown("""
     <div class="feature-card">
-        <h4>🔧 NSDL Scraping Features:</h4>
-        <ul style="font-size: 16px; line-height: 1.6;">
+        <h4 style="color: #93c5fd; margin-bottom: 1rem;">🔧 NSDL Scraping Features:</h4>
+        <ul style="font-size: 16px; line-height: 1.6; color: #cbd5e1;">
             <li><strong>Extracts data from NSDL APIs in real-time</strong> - Fetches live bond information</li>
             <li><strong>Formats dates to DD-MMM-YYYY</strong> - Standardized date formatting</li>
             <li><strong>Handles multiple ISINs simultaneously</strong> - Process batch files efficiently</li>
@@ -1014,14 +1187,13 @@ def main():
         
         st.markdown("---")
         
-        st.markdown("#### ⏱️ Processing Time")
-        st.warning("""
-        Processing time depends on:
-        - Number of ISINs (≈2-3 seconds each for cloud)
-        - Selected operations
-        - Internet speed
-        
-        **Example**: 100 ISINs ≈ 5-10 minutes
+        st.markdown("#### 🚀 Performance Tips")
+        st.markdown("""
+        - **Small batches**: Process 50-100 ISINs at a time
+        - **Cloud deployment**: Use 2-3 second delay
+        - **Stable connection**: Ensure reliable internet
+        - **Valid ISINs**: Clean your input file first
+        - **Monitor progress**: Keep browser open
         """)
     
     # Main content area
@@ -1103,7 +1275,7 @@ def main():
                         with col2:
                             st.metric("Operations Completed", len(results))
                         with col3:
-                            st.metric("Total Time", f"~{len(df)*delay*len(results)/60:.1f} min")
+                            st.metric("Estimated Time", f"~{len(df)*delay*len(results)/60:.1f} min")
                         
                         # Create tabs for each result
                         if len(results) > 1:
@@ -1138,7 +1310,7 @@ def main():
                             st.markdown("### Combined Download:")
                             zip_buffer = create_zip_file(results)
                             b64 = base64.b64encode(zip_buffer.getvalue()).decode()
-                            href = f'<a href="data:application/zip;base64,{b64}" download="BADDIE_Results.zip" style="text-decoration: none; color: white; background: #2196F3; padding: 12px 24px; border-radius: 5px; font-weight: bold;">📦 Download All Results (ZIP)</a>'
+                            href = f'<a class="download-btn download-btn-blue" href="data:application/zip;base64,{b64}" download="BADDIE_Results.zip">📦 Download All Results (ZIP)</a>'
                             st.markdown(href, unsafe_allow_html=True)
                         
                         # Success message
@@ -1164,44 +1336,40 @@ def main():
             'Face Value': [100, 100, 100]
         })
         
+        st.markdown('<div class="sample-table">', unsafe_allow_html=True)
         st.dataframe(sample_data, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("### 🔄 How It Works")
         
+        st.markdown('<div class="steps-container">', unsafe_allow_html=True)
         steps = [
-            "1. **Upload** your Excel/CSV file",
-            "2. **Select** operations to perform",
-            "3. **Click** Start Processing",
-            "4. **Wait** for progress to complete",
-            "5. **View** results in browser",
-            "6. **Download** files as needed"
+            "**Upload** your Excel/CSV file with ISINs",
+            "**Select** operations to perform",
+            "**Click** Start Processing button",
+            "**Wait** for progress to complete",
+            "**View** results in interactive tables",
+            "**Download** files as Excel or ZIP"
         ]
         
-        for step in steps:
-            st.markdown(f"- {step}")
+        for idx, step in enumerate(steps, 1):
+            st.markdown(f'<div class="step-item"><div class="step-number">{idx}</div><div>{step}</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("### 📊 Comprehensive Output Includes")
-        st.info("""
-        **80+ Bond Parameters:**
-        • Basic Bond Information  
-        • Coupon & Interest Details  
-        • Redemption Information  
-        • Rating & Credit Details  
-        • Security & Guarantee Details  
-        • Covenant Information  
-        • NSDL Verification Status  
-        """)
-        
-        st.markdown("### ⚠️ Important Notes")
-        st.warning("""
-        - NSDL API may block cloud IPs (use Railway for better results)
-        - Some ISINs might not be found in NSDL
-        - Processing large files may take time
-        - Keep browser open during processing
-        - For cloud: Use 2-3 second delay between calls
-        """)
+        st.markdown("""
+        <div class="info-box">
+            <strong>80+ Bond Parameters:</strong><br>
+            • Basic Bond Information<br>
+            • Coupon & Interest Details<br>
+            • Redemption Information<br>
+            • Rating & Credit Details<br>
+            • Security & Guarantee Details<br>
+            • Covenant Information<br>
+            • NSDL Verification Status
+        </div>
+        """, unsafe_allow_html=True)
 
 # Run the app
 if __name__ == "__main__":
     main()
-
