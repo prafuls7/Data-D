@@ -10,6 +10,7 @@ import zipfile
 from io import BytesIO
 import warnings
 import random
+import re
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
@@ -365,10 +366,19 @@ class NSDLBondAnalyzer:
             'CARE RATINGS LIMITED': 'CARE', 
             'ICRA LIMITED': 'ICRA',
             'INDIA RATINGS AND RESEARCH PRIVATE LIMITED': 'IND',
+            'INDIA RATING AND RESEARCH PVT. LTD': 'IND',
+            'INDIA RATINGS AND RESEARCH PVT. LTD': 'IND',
+            'INDIA RATING AND RESEARCH PRIVATE LIMITED': 'IND',
             'ACUITE RATINGS & RESEARCH LIMITED': 'ACUITE',
+            'Acuite Ratings And Research Limited': 'ACUITE',
+            'ACUITE RATINGS AND RESEARCH LIMITED': 'ACUITE',
             'BRICKWORK RATINGS INDIA PRIVATE LIMITED': 'BWR',
+            'BRICKWORK RATINGS INDIA PVT LTD': 'BWR',
             'SMERA RATINGS LIMITED': 'SMERA',
-            'INFOMERICS VALUATION AND RATING PRIVATE LIMITED': 'IVR'
+            'INFOMERICS VALUATION AND RATING PRIVATE LIMITED': 'IVR',
+            'Infomerics Valuation and Rating Pvt. Ltd': 'IVR',
+            'CRISIL LIMITED': 'CRISIL',
+            'CREDIT ANALYSIS & RESEARCH LTD': 'CARE'
         }
         self.progress_bar = progress_bar
         self.status_text = status_text
@@ -515,6 +525,280 @@ class NSDLBondAnalyzer:
         """Get listing details from NSDL"""
         url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/listings?isin={isin}"
         return self.fetch_api_data(url)
+    
+    # ====================== CURRENT RATING FUNCTIONS ======================
+    
+    def clean_rating(self, rating: str) -> str:
+        """Clean and format rating string"""
+        if not rating or pd.isna(rating):
+            return ""
+        
+        rating_str = str(rating).strip()
+        
+        # Remove PP-MLD / PPMLD / PP MLD
+        rating_str = re.sub(r'^(PP[-\s]?MLD\s*)', '', rating_str, flags=re.IGNORECASE)
+        
+        # Add space before (CE)
+        rating_str = re.sub(r'\s*\(CE\)', ' (CE)', rating_str, flags=re.IGNORECASE)
+        
+        # Remove double spaces
+        rating_str = re.sub(r'\s+', ' ', rating_str)
+        
+        return rating_str.strip()
+    
+    def map_agency_name(self, agency_name: str) -> str:
+        """Map full agency name to short code"""
+        if not agency_name:
+            return ""
+            
+        agency_upper = agency_name.upper()
+        
+        for full_name, short_code in self.rating_agency_mapping.items():
+            if full_name.upper() in agency_upper or agency_upper in full_name.upper():
+                return short_code
+        
+        # Check for partial matches
+        if "CRISIL" in agency_upper:
+            return "CRISIL"
+        elif "CARE" in agency_upper:
+            return "CARE"
+        elif "ICRA" in agency_upper:
+            return "ICRA"
+        elif "IND" in agency_upper or "INDIA RATING" in agency_upper:
+            return "IND"
+        elif "ACUITE" in agency_upper:
+            return "ACUITE"
+        elif "BWR" in agency_upper or "BRICKWORK" in agency_upper:
+            return "BWR"
+        elif "SMERA" in agency_upper:
+            return "SMERA"
+        elif "IVR" in agency_upper or "INFOMERICS" in agency_upper:
+            return "IVR"
+        
+        return ""
+    
+    def extract_credit_rating_info(self, rating_data: Dict, isin: str) -> Dict:
+        """Extract credit rating information from API response"""
+        result = {
+            'ISIN': isin,
+            'Outlook': '',
+            'Restructured_isin': '',
+            'Date_of_Verification': '',
+            'pressReleaseLink': '',
+            'Current_RATING_1': '',
+            'Current_CRISIL': '',
+            'Outlook1': '',
+            'Current_RATING_2': '',
+            'Current_CARE': '',
+            'Outlook2': '',
+            'Current_RATING_3': '',
+            'Current_ICRA': '',
+            'Outlook3': '',
+            'Current_RATING_4': '',
+            'Current_IND': '',
+            'Outlook4': '',
+            'Current_RATING_5': '',
+            'Current_ACUITE': '',
+            'Outlook5': '',
+            'Current_RATING_6': '',
+            'Current_BWR': '',
+            'Outlook6': '',
+            'Current_RATING_7': '',
+            'Current_SMERA': '',
+            'Outlook7': '',
+            'Current_RATING_8': '',
+            'Current_IVR': '',
+            'Outlook8': ''
+        }
+        
+        if not rating_data:
+            return result
+        
+        instrument_rate_flag = rating_data.get('instrumentRateFlag', '')
+        if instrument_rate_flag == 'Unrated':
+            return result
+        
+        current_ratings = rating_data.get('currentRatings', [])
+        if not current_ratings:
+            return result
+        
+        agency_order = ["CRISIL", "CARE", "ICRA", "IND", "ACUITE", "BWR", "SMERA", "IVR"]
+        agency_data = {}
+        
+        for rating in current_ratings:
+            agency_name = rating.get('creditRatingAgencyName', '')
+            agency_short = self.map_agency_name(agency_name)
+            
+            if not agency_short or agency_short not in agency_order:
+                continue
+            
+            raw_rating = rating.get('currentRating', '')
+            cleaned_rating = self.clean_rating(raw_rating)
+            
+            outlook = rating.get('outlook', '')
+            if outlook in ["-", "", "null", None]:
+                outlook = ""
+            
+            press_link = rating.get('pressReleaseLink', '')
+            if press_link in ["None", "null", None, ""]:
+                press_link = ""
+            
+            verification_date = rating.get('dateOfVerification', '')
+            if verification_date in ["-", "", "null", None]:
+                verification_date = ""
+            
+            agency_data[agency_short] = {
+                'rating': cleaned_rating,
+                'outlook': outlook,
+                'link': press_link,
+                'date': verification_date
+            }
+        
+        ordered_outlooks = []
+        ordered_links = []
+        ordered_dates = []
+        
+        for agency in agency_order:
+            if agency in agency_data:
+                data = agency_data[agency]
+                
+                if agency == "CRISIL":
+                    result['Current_RATING_1'] = data['rating']
+                    result['Current_CRISIL'] = "CRISIL"
+                    result['Outlook1'] = data['outlook']
+                elif agency == "CARE":
+                    result['Current_RATING_2'] = data['rating']
+                    result['Current_CARE'] = "CARE"
+                    result['Outlook2'] = data['outlook']
+                elif agency == "ICRA":
+                    result['Current_RATING_3'] = data['rating']
+                    result['Current_ICRA'] = "ICRA"
+                    result['Outlook3'] = data['outlook']
+                elif agency == "IND":
+                    result['Current_RATING_4'] = data['rating']
+                    result['Current_IND'] = "IND"
+                    result['Outlook4'] = data['outlook']
+                elif agency == "ACUITE":
+                    result['Current_RATING_5'] = data['rating']
+                    result['Current_ACUITE'] = "ACUITE"
+                    result['Outlook5'] = data['outlook']
+                elif agency == "BWR":
+                    result['Current_RATING_6'] = data['rating']
+                    result['Current_BWR'] = "BWR"
+                    result['Outlook6'] = data['outlook']
+                elif agency == "SMERA":
+                    result['Current_RATING_7'] = data['rating']
+                    result['Current_SMERA'] = "SMERA"
+                    result['Outlook7'] = data['outlook']
+                elif agency == "IVR":
+                    result['Current_RATING_8'] = data['rating']
+                    result['Current_IVR'] = "IVR"
+                    result['Outlook8'] = data['outlook']
+                
+                if data['outlook']:
+                    ordered_outlooks.append(data['outlook'])
+                if data['link']:
+                    ordered_links.append(data['link'])
+                if data['date']:
+                    ordered_dates.append(data['date'])
+        
+        valid_outlooks = [str(o).strip() for o in ordered_outlooks if str(o).strip()]
+        valid_links = [str(l).strip() for l in ordered_links if str(l).strip()]
+        valid_dates = [str(d).strip() for d in ordered_dates if str(d).strip()]
+        
+        result['Outlook'] = ', '.join(valid_outlooks)
+        result['pressReleaseLink'] = ', '.join(valid_links)
+        
+        if valid_dates:
+            try:
+                date_objs = []
+                for date_str in valid_dates:
+                    try:
+                        date_objs.append(datetime.strptime(date_str, '%d-%m-%Y'))
+                    except:
+                        try:
+                            date_objs.append(datetime.strptime(date_str, '%Y-%m-%d'))
+                        except:
+                            continue
+                
+                if date_objs:
+                    latest_date = max(date_objs)
+                    result['Date_of_Verification'] = latest_date.strftime('%d-%m-%Y')
+                else:
+                    result['Date_of_Verification'] = valid_dates[0]
+            except:
+                result['Date_of_Verification'] = valid_dates[0]
+        
+        return result
+    
+    # ====================== RECORD DATE FUNCTIONS ======================
+    
+    def calculate_date_diff(self, record_date, due_date):
+        """Calculate difference between due date and record date in days"""
+        try:
+            record_dt = datetime.strptime(record_date, '%d-%m-%Y')
+            due_dt = datetime.strptime(due_date, '%d-%m-%Y')
+            diff = (due_dt - record_dt).days
+            return diff
+        except Exception as e:
+            return None
+    
+    def extract_interest_payments(self, data):
+        """Extract interest payment rows from cashFlowSchedule"""
+        interest_payments = []
+        
+        try:
+            cashflow_data = data.get('coupensVo', {}).get('cashFlowScheduleDetails', {}).get('cashFlowSchedule', [])
+            
+            for item in cashflow_data:
+                if item.get('cashFlowsEvent') == 'Interest':
+                    record_date = item.get('recordDate', '')
+                    due_date = item.get('dueDate', '')
+                    
+                    if record_date and due_date and record_date != '-' and due_date != '-':
+                        interest_payments.append({
+                            'record_date': record_date,
+                            'due_date': due_date,
+                            'full_data': item
+                        })
+            
+            return interest_payments
+            
+        except Exception as e:
+            return []
+    
+    def select_interest_rows(self, interest_payments):
+        """Select interest rows based on the logic"""
+        selected_rows = []
+        total_rows = len(interest_payments)
+        
+        if total_rows == 0:
+            return selected_rows
+        
+        if total_rows <= 5:
+            for i in range(total_rows):
+                selected_rows.append({
+                    'position': i + 1,
+                    'data': interest_payments[i]
+                })
+        else:
+            positions = [
+                (1, interest_payments[0]),
+                (2, interest_payments[1]),
+                (3, interest_payments[-3]),
+                (4, interest_payments[-2]),
+                (5, interest_payments[-1])
+            ]
+            
+            for pos, data in positions:
+                selected_rows.append({
+                    'position': pos,
+                    'data': data
+                })
+        
+        return selected_rows
+    
+    # ====================== MAIN PROCESSING FUNCTIONS ======================
     
     def extract_comprehensive_data(self, isin):
         """Extract comprehensive bond data from NSDL APIs"""
@@ -695,40 +979,27 @@ class NSDLBondAnalyzer:
                 if listing_details:
                     bond_data['LISTING EXCHANGE'] = listing_details[0].get('exchangeName', '')
             
-            # Get rating data
+            # Get rating data - using new function
             rating_data = self.get_rating_data(isin)
-            if rating_data and 'currentRatings' in rating_data:
-                for rating in rating_data['currentRatings']:
-                    agency_name = rating.get('creditRatingAgencyName', '')
-                    rating_value = rating.get('currentRating', '')
-                    
-                    for full_name, short_code in self.rating_agency_mapping.items():
-                        if full_name.upper() in agency_name.upper():
-                            if short_code == 'CRISIL':
-                                bond_data['RATING_1'] = rating_value
-                                bond_data['CRISIL'] = 'CRISIL'
-                            elif short_code == 'CARE':
-                                bond_data['RATING_2'] = rating_value
-                                bond_data['CARE'] = 'CARE'
-                            elif short_code == 'ICRA':
-                                bond_data['RATING_3'] = rating_value
-                                bond_data['ICRA'] = 'ICRA'
-                            elif short_code == 'IND':
-                                bond_data['RATING_4'] = rating_value
-                                bond_data['IND'] = 'IND'
-                            elif short_code == 'ACUITE':
-                                bond_data['RATING_5'] = rating_value
-                                bond_data['ACUITE'] = 'ACUITE'
-                            elif short_code == 'BWR':
-                                bond_data['RATING_6'] = rating_value
-                                bond_data['BWR'] = 'BWR'
-                            elif short_code == 'SMERA':
-                                bond_data['RATING_7'] = rating_value
-                                bond_data['SMERA'] = 'SMERA'
-                            elif short_code == 'IVR':
-                                bond_data['RATING_8'] = rating_value
-                                bond_data['IVR'] = 'IVR'
-                            break
+            credit_info = self.extract_credit_rating_info(rating_data, isin)
+            
+            # Map new rating columns to comprehensive format
+            bond_data['RATING_1'] = credit_info.get('Current_RATING_1', '')
+            bond_data['CRISIL'] = credit_info.get('Current_CRISIL', '')
+            bond_data['RATING_2'] = credit_info.get('Current_RATING_2', '')
+            bond_data['CARE'] = credit_info.get('Current_CARE', '')
+            bond_data['RATING_3'] = credit_info.get('Current_RATING_3', '')
+            bond_data['ICRA'] = credit_info.get('Current_ICRA', '')
+            bond_data['RATING_4'] = credit_info.get('Current_RATING_4', '')
+            bond_data['IND'] = credit_info.get('Current_IND', '')
+            bond_data['RATING_5'] = credit_info.get('Current_RATING_5', '')
+            bond_data['ACUITE'] = credit_info.get('Current_ACUITE', '')
+            bond_data['RATING_6'] = credit_info.get('Current_RATING_6', '')
+            bond_data['BWR'] = credit_info.get('Current_BWR', '')
+            bond_data['RATING_7'] = credit_info.get('Current_RATING_7', '')
+            bond_data['SMERA'] = credit_info.get('Current_SMERA', '')
+            bond_data['RATING_8'] = credit_info.get('Current_RATING_8', '')
+            bond_data['IVR'] = credit_info.get('Current_IVR', '')
             
             # Check matured/restructured
             matured_data = self.get_matured_restructured_data(isin)
@@ -926,7 +1197,7 @@ class NSDLBondAnalyzer:
         return pd.DataFrame(results)
     
     def generate_ratings(self, df, delay=0.5):
-        """Generate rating information for ISINs"""
+        """Generate rating information for ISINs using new logic"""
         results = []
         
         # Find ISIN column
@@ -949,91 +1220,35 @@ class NSDLBondAnalyzer:
             # Fetch rating data
             rating_data = self.get_rating_data(isin)
             
-            # Initialize result row with all columns
-            result_row = {'ISIN': isin}
-            
-            # Rating columns
-            rating_cols = [
-                'RATING_1', 'CRISIL', 'RATING_2', 'CARE', 'RATING_3', 'ICRA',
-                'RATING_4', 'IND', 'RATING_5', 'ACUITE', 'RATING_6', 'BWR',
-                'RATING_7', 'SMERA', 'RATING_8', 'IVR'
-            ]
-            
-            # Outlook columns
-            outlook_cols = [f'Outlook{i}' for i in range(1, 9)]
-            
-            # Initialize all columns
-            for col in rating_cols + outlook_cols + ['pressReleaseLink', 'dateOfVerification']:
-                result_row[col] = ''
-            
-            press_links = []
-            
-            # Process current ratings
-            if rating_data and 'currentRatings' in rating_data:
-                for rating in rating_data['currentRatings']:
-                    agency_name = rating.get('creditRatingAgencyName', '')
-                    rating_value = rating.get('currentRating', '')
-                    outlook_value = rating.get('outlook', '')
-                    press_link = rating.get('pressReleaseLink', '')
-                    
-                    # Map agency name to short code
-                    short_code = None
-                    for full_name, short_name in self.rating_agency_mapping.items():
-                        if full_name.upper() in agency_name.upper():
-                            short_code = short_name
-                            break
-                    
-                    if short_code and rating_value:
-                        # Assign to appropriate columns
-                        if short_code == 'CRISIL':
-                            result_row['RATING_1'] = rating_value
-                            result_row['CRISIL'] = 'CRISIL'
-                            result_row['Outlook1'] = outlook_value
-                        elif short_code == 'CARE':
-                            result_row['RATING_2'] = rating_value
-                            result_row['CARE'] = 'CARE'
-                            result_row['Outlook2'] = outlook_value
-                        elif short_code == 'ICRA':
-                            result_row['RATING_3'] = rating_value
-                            result_row['ICRA'] = 'ICRA'
-                            result_row['Outlook3'] = outlook_value
-                        elif short_code == 'IND':
-                            result_row['RATING_4'] = rating_value
-                            result_row['IND'] = 'IND'
-                            result_row['Outlook4'] = outlook_value
-                        elif short_code == 'ACUITE':
-                            result_row['RATING_5'] = rating_value
-                            result_row['ACUITE'] = 'ACUITE'
-                            result_row['Outlook5'] = outlook_value
-                        elif short_code == 'BWR':
-                            result_row['RATING_6'] = rating_value
-                            result_row['BWR'] = 'BWR'
-                            result_row['Outlook6'] = outlook_value
-                        elif short_code == 'SMERA':
-                            result_row['RATING_7'] = rating_value
-                            result_row['SMERA'] = 'SMERA'
-                            result_row['Outlook7'] = outlook_value
-                        elif short_code == 'IVR':
-                            result_row['RATING_8'] = rating_value
-                            result_row['IVR'] = 'IVR'
-                            result_row['Outlook8'] = outlook_value
-                        
-                        # Add press release link
-                        if press_link and press_link not in press_links:
-                            press_links.append(press_link)
-            
-            # Combine press release links
-            if press_links:
-                result_row['pressReleaseLink'] = '; '.join(press_links)
-            
-            results.append(result_row)
+            # Extract credit rating info using new function
+            credit_info = self.extract_credit_rating_info(rating_data, isin)
+            results.append(credit_info)
             
             # Rate limiting with random delay
             time.sleep(delay + random.uniform(0, 0.3))
         
+        # Define column order
+        column_order = [
+            'ISIN', 'Outlook', 'Restructured_isin', 'Date_of_Verification', 'pressReleaseLink',
+            'Current_RATING_1', 'Current_CRISIL', 'Outlook1',
+            'Current_RATING_2', 'Current_CARE', 'Outlook2',
+            'Current_RATING_3', 'Current_ICRA', 'Outlook3',
+            'Current_RATING_4', 'Current_IND', 'Outlook4',
+            'Current_RATING_5', 'Current_ACUITE', 'Outlook5',
+            'Current_RATING_6', 'Current_BWR', 'Outlook6',
+            'Current_RATING_7', 'Current_SMERA', 'Outlook7',
+            'Current_RATING_8', 'Current_IVR', 'Outlook8'
+        ]
+        
         # Create DataFrame with proper column order
-        column_order = ['ISIN'] + rating_cols + outlook_cols + ['pressReleaseLink', 'dateOfVerification']
-        return pd.DataFrame(results, columns=column_order)
+        result_df = pd.DataFrame(results)
+        
+        # Ensure all columns exist
+        for col in column_order:
+            if col not in result_df.columns:
+                result_df[col] = ''
+        
+        return result_df[column_order]
     
     def generate_matured_restructured(self, df, delay=0.5):
         """Generate matured/restructured information"""
@@ -1080,6 +1295,79 @@ class NSDLBondAnalyzer:
             })
             
             # Rate limiting with random delay
+            time.sleep(delay + random.uniform(0, 0.3))
+        
+        return pd.DataFrame(results)
+    
+    def generate_record_dates(self, df, delay=0.5):
+        """Generate record dates for ISINs"""
+        results = []
+        
+        # Find ISIN column
+        isin_col = self.find_column_name(df.columns.tolist(), self.column_patterns['isin'])
+        if not isin_col:
+            st.error("❌ ERROR: No ISIN column found!")
+            return None
+        
+        total_rows = len(df)
+        
+        for idx, row in df.iterrows():
+            isin = str(row[isin_col]).strip()
+            if not isin or isin.lower() == 'nan':
+                continue
+            
+            # Update progress
+            progress_pct = (idx + 1) / total_rows
+            self.update_progress(f"Getting record dates {idx+1}/{total_rows}", progress_pct)
+            
+            result = {'ISIN': isin, 'Status': 'Failed'}
+            
+            for j in range(1, 6):
+                result[f'record_date{j}'] = ''
+                result[f'due_date{j}'] = ''
+                result[f'Diff{j}'] = ''
+            
+            try:
+                # Get coupon data
+                coupon_data = self.get_coupon_data(isin)
+                if not coupon_data:
+                    result['Status'] = 'API Error'
+                    results.append(result)
+                    continue
+                
+                interest_payments = self.extract_interest_payments(coupon_data)
+                
+                if not interest_payments:
+                    result['Status'] = 'No Interest Payments'
+                    results.append(result)
+                    continue
+                
+                selected_rows = self.select_interest_rows(interest_payments)
+                
+                for row_data in selected_rows:
+                    position = row_data['position']
+                    data = row_data['data']
+                    
+                    record_date = data['record_date']
+                    due_date = data['due_date']
+                    
+                    result[f'record_date{position}'] = record_date
+                    result[f'due_date{position}'] = due_date
+                    
+                    diff = self.calculate_date_diff(record_date, due_date)
+                    if diff is not None:
+                        result[f'Diff{position}'] = diff
+                    else:
+                        result[f'Diff{position}'] = 'Error'
+                
+                result['Status'] = 'Success'
+                result['Total_Interest_Rows'] = len(interest_payments)
+                result['Selected_Rows'] = len(selected_rows)
+                
+            except Exception as e:
+                result['Status'] = f'Error: {str(e)[:50]}'
+            
+            results.append(result)
             time.sleep(delay + random.uniform(0, 0.3))
         
         return pd.DataFrame(results)
@@ -1143,10 +1431,12 @@ def main():
                                       help="Extract 80+ bond parameters from NSDL APIs")
         do_comparison = st.checkbox("🔍 Column Comparison", value=False, 
                                     help="Compare file data with NSDL API data")
-        do_ratings = st.checkbox("⭐ Rating Generation", value=False,
-                                help="Fetch credit ratings for each ISIN")
+        do_ratings = st.checkbox("⭐ Rating Generation (New Logic)", value=False,
+                                help="Fetch credit ratings for each ISIN with Outlook1-8")
         do_matured = st.checkbox("📅 Matured/Restructured Check", value=False,
                                 help="Check if bonds are matured or restructured")
+        do_record_dates = st.checkbox("📅 Record Date Generation", value=False,
+                                     help="Generate record dates with date differences")
         
         st.markdown("---")
         
@@ -1248,16 +1538,22 @@ def main():
                                 results['Comparison'] = comparison_df
                     
                     if do_ratings:
-                        with st.spinner("⭐ Fetching credit ratings..."):
+                        with st.spinner("⭐ Fetching credit ratings (New Logic)..."):
                             ratings_df = analyzer.generate_ratings(df, delay)
                             if ratings_df is not None and not ratings_df.empty:
-                                results['CurrentRating'] = ratings_df
+                                results['CurrentRating_New'] = ratings_df
                     
                     if do_matured:
                         with st.spinner("📅 Checking matured/restructured status..."):
                             matured_df = analyzer.generate_matured_restructured(df, delay)
                             if matured_df is not None and not matured_df.empty:
                                 results['MaturedRestructured'] = matured_df
+                    
+                    if do_record_dates:
+                        with st.spinner("📅 Generating record dates..."):
+                            record_dates_df = analyzer.generate_record_dates(df, delay)
+                            if record_dates_df is not None and not record_dates_df.empty:
+                                results['RecordDates'] = record_dates_df
                     
                     # Complete progress
                     progress_bar.progress(1.0)
@@ -1356,17 +1652,20 @@ def main():
             st.markdown(f'<div class="step-item"><div class="step-number">{idx}</div><div>{step}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("### 📊 Comprehensive Output Includes")
+        st.markdown("### 📊 New Features")
         st.markdown("""
         <div class="info-box">
-            <strong>80+ Bond Parameters:</strong><br>
-            • Basic Bond Information<br>
-            • Coupon & Interest Details<br>
-            • Redemption Information<br>
-            • Rating & Credit Details<br>
-            • Security & Guarantee Details<br>
-            • Covenant Information<br>
-            • NSDL Verification Status
+            <strong>Enhanced Rating Generation:</strong><br>
+            • Individual Outlook columns (Outlook1-8)<br>
+            • Better agency name mapping<br>
+            • Cleaned rating formatting<br>
+            • Proper press release links<br><br>
+            
+            <strong>Record Date Generation:</strong><br>
+            • Extract record dates from NSDL<br>
+            • Calculate days difference<br>
+            • Smart row selection logic<br>
+            • Status tracking for each ISIN
         </div>
         """, unsafe_allow_html=True)
 
