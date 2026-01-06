@@ -389,6 +389,7 @@ class NSDLBondAnalyzer:
             'isin': ['isin', 'ISIN'],
             'seniority': ['seniority', 'SENIORITY', 'Seniority'],
             'coupon_fixed': ['coupon_fixed', 'Coupon_fixed', 'Coupon Fixed', 'coupon fixed', 'Coupon'],
+            'secured_or_unsecured' : ['secured_or_unsecured'],
             'pay_in_date_1': ['pay-in date_1', 'pay in date_1', 'payin date_1', 'pay_in_date_1', 'payin date'],
             'redemption_date_1': ['redemption date_1', 'Redemption date_1', 'redemption_date_1', 'redemption date'],
             'issue_price': ['issue price', 'ISSUE PRICE', 'issue_price', 'Issue Price'],
@@ -1673,3 +1674,4 @@ def main():
 # Run the app
 if __name__ == "__main__":
     main()
+
