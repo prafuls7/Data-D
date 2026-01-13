@@ -413,8 +413,8 @@ features = [
     },
     {
         "icon": "✅",
-        "title": "Better Error Handling",
-        "desc": "Graceful handling of API errors and missing data"
+        "title": "Smart Comparison Logic",
+        "desc": "Intelligent date and percentage matching with multiple format support"
     },
     {
         "icon": "🔄",
@@ -496,17 +496,17 @@ class NSDLBondAnalyzer:
         # Column patterns for flexible matching - UPDATED for all required columns
         self.column_patterns = {
             'isin': ['isin', 'ISIN'],
-            'issuer_name': ['issuer name', 'ISSUER NAME', 'Issuer Name', 'issuer_name'],
+            'issuer_name': ['issuer name', 'ISSUER NAME', 'Issuer Name', 'issuer_name', 'issuer'],
             'seniority': ['seniority', 'SENIORITY', 'Seniority'],
-            'secured_or_unsecured': ['secured_or_unsecured', 'SECURED/UNSECURED', 'Secured/Unsecured'],
-            'coupon_fixed': ['coupon_fixed', 'Coupon_fixed', 'Coupon Fixed', 'coupon fixed', 'Coupon'],
+            'secured_or_unsecured': ['secured_or_unsecured', 'SECURED/UNSECURED', 'Secured/Unsecured', 'secured'],
+            'coupon_fixed': ['coupon_fixed', 'Coupon_fixed', 'Coupon Fixed', 'coupon fixed', 'Coupon', 'coupon'],
             'issue_price': ['issue price', 'ISSUE PRICE', 'issue_price', 'Issue Price'],
             'face_value': ['face value', 'FACE VALUE', 'face_value', 'Face Value'],
-            'total_issue_size_cr': ['total issue size', 'TOTAL ISSUE SIZE', 'total_issue_size', 'Total Issue Size', 'total_issue_size_cr'],
-            'listed_or_unlisted': ['listed_or_unlisted', 'LISTED/UNLISTED', 'Listed/Unlisted'],
-            'listing_exchange': ['listing_exchange', 'LISTING EXCHANGE', 'Listing Exchange'],
-            'redemption_date': ['redemption date', 'Redemption date', 'redemption_date', 'redemption_date_1'],
-            'payin_date': ['payin date', 'pay-in date', 'payin_date', 'pay_in_date_1']
+            'total_issue_size_cr': ['total issue size', 'TOTAL ISSUE SIZE', 'total_issue_size', 'Total Issue Size', 'total_issue_size_cr', 'issue size'],
+            'listed_or_unlisted': ['listed_or_unlisted', 'LISTED/UNLISTED', 'Listed/Unlisted', 'listed'],
+            'listing_exchange': ['listing_exchange', 'LISTING EXCHANGE', 'Listing Exchange', 'exchange'],
+            'redemption_date': ['redemption date', 'Redemption date', 'redemption_date', 'redemption_date_1', 'maturity date', 'maturity_date'],
+            'payin_date': ['payin date', 'pay-in date', 'payin_date', 'pay_in_date_1', 'allotment date', 'allotment_date']
         }
         
         # Define comprehensive bond data columns
@@ -653,6 +653,11 @@ class NSDLBondAnalyzer:
         
         return {}
     
+    def get_basic_isin_info(self, isin):
+        """Get basic ISIN info including issuer name"""
+        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/isins?isin={isin}"
+        return self.fetch_api_data(url)
+    
     def get_instrument_data(self, isin):
         """Get instrument data from NSDL"""
         url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/instruments?isin={isin}"
@@ -710,7 +715,7 @@ class NSDLBondAnalyzer:
         return listed_or_unlisted, listing_exchange
     
     def compare_values(self, val1, val2, data_type='text'):
-        """Compare two values and return status"""
+        """Compare two values and return status - FIXED for dates and percentages"""
         try:
             # Handle missing values
             if pd.isna(val1) or val1 is None or str(val1).strip() == '':
@@ -719,36 +724,88 @@ class NSDLBondAnalyzer:
             if pd.isna(val2) or val2 is None or str(val2).strip() == '':
                 return 'MISSING', 'API value missing'
             
+            # Convert to string and clean
+            val1_str = str(val1).strip()
+            val2_str = str(val2).strip()
+            
             # Clean values based on type
             if data_type == 'date':
-                # Try to parse dates
-                try:
-                    val1_clean = pd.to_datetime(val1).strftime('%d-%m-%Y')
-                    val2_clean = pd.to_datetime(val2).strftime('%d-%m-%Y')
-                except:
-                    val1_clean = str(val1).strip()
-                    val2_clean = str(val2).strip()
-            elif data_type in ['number', 'float']:
-                try:
-                    val1_clean = float(str(val1).replace(',', ''))
-                    val2_clean = float(str(val2).replace(',', ''))
-                except:
-                    val1_clean = str(val1).strip()
-                    val2_clean = str(val2).strip()
-            else:
-                val1_clean = str(val1).strip().lower()
-                val2_clean = str(val2).strip().lower()
+                # Try to parse dates in various formats
+                date_formats = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%d-%m-%Y', '%d/%m/%Y', '%d-%b-%Y', '%d-%B-%Y']
+                val1_date = None
+                val2_date = None
+                
+                # Clean val1 - remove time part if present
+                if '00:00:00' in val1_str:
+                    val1_str = val1_str.split(' ')[0]
+                
+                # Try to parse val1
+                for fmt in date_formats:
+                    try:
+                        val1_date = datetime.strptime(val1_str, fmt)
+                        break
+                    except:
+                        continue
+                
+                # Try to parse val2
+                for fmt in date_formats:
+                    try:
+                        val2_date = datetime.strptime(val2_str, fmt)
+                        break
+                    except:
+                        continue
+                
+                if val1_date and val2_date:
+                    # Compare dates
+                    if val1_date == val2_date:
+                        return 'MATCH', ''
+                    else:
+                        # Format both dates for display
+                        val1_display = val1_date.strftime('%d-%m-%Y')
+                        val2_display = val2_date.strftime('%d-%m-%Y')
+                        return 'MISMATCH', f'File: {val1_display}, API: {val2_display}'
+                else:
+                    # Fall back to string comparison (case-insensitive)
+                    if val1_str.lower() == val2_str.lower():
+                        return 'MATCH', ''
+                    else:
+                        return 'MISMATCH', f'File: {val1_str}, API: {val2_str}'
             
-            # Compare
-            if val1_clean == val2_clean:
-                return 'MATCH', ''
-            else:
-                return 'MISMATCH', f'File: {val1}, API: {val2}'
+            elif data_type == 'number':
+                # Handle numbers with percentage signs, commas, etc.
+                # Remove percentage signs, commas, and whitespace
+                val1_clean = re.sub(r'[%\s,]', '', val1_str)
+                val2_clean = re.sub(r'[%\s,]', '', val2_str)
+                
+                # Try to convert to float
+                try:
+                    val1_num = float(val1_clean)
+                    val2_num = float(val2_clean)
+                    
+                    # Compare with tolerance for floating point (0.01% tolerance)
+                    tolerance = max(abs(val1_num), abs(val2_num)) * 0.0001
+                    if abs(val1_num - val2_num) <= tolerance:
+                        return 'MATCH', ''
+                    else:
+                        return 'MISMATCH', f'File: {val1_str}, API: {val2_str}'
+                except:
+                    # Fall back to string comparison (case-insensitive)
+                    if val1_str.lower() == val2_str.lower():
+                        return 'MATCH', ''
+                    else:
+                        return 'MISMATCH', f'File: {val1_str}, API: {val2_str}'
+            
+            else:  # text comparison
+                # Case-insensitive comparison for text
+                if val1_str.lower() == val2_str.lower():
+                    return 'MATCH', ''
+                else:
+                    return 'MISMATCH', f'File: {val1_str}, API: {val2_str}'
         except:
             return 'ERROR', 'Comparison error'
     
     def perform_comparison(self, df, delay=0.5):
-        """Perform comparison of columns with NSDL data - UPDATED for all required columns"""
+        """Perform comparison of columns with NSDL data - UPDATED"""
         results = []
         
         # Find all columns in the input file
@@ -800,7 +857,16 @@ class NSDLBondAnalyzer:
             }
             
             try:
-                # 1. Get instrument data
+                # 1. Get basic ISIN info for issuer name - FROM CORRECT API
+                basic_data = self.get_basic_isin_info(isin)
+                if basic_data and isinstance(basic_data, dict):
+                    if 'data' in basic_data and isinstance(basic_data['data'], list) and len(basic_data['data']) > 0:
+                        bond_info = basic_data['data'][0]
+                        api_values['issuer_name'] = bond_info.get('issuerName', '')
+                        api_values['payin_date'] = bond_info.get('allotmentDate', '')
+                        api_values['redemption_date'] = bond_info.get('maturityDate', '')
+                
+                # 2. Get instrument data for other fields
                 instrument_data = self.get_instrument_data(isin)
                 
                 if instrument_data and isinstance(instrument_data, dict):
@@ -811,26 +877,52 @@ class NSDLBondAnalyzer:
                             instrument = instruments_vo['instruments']
                             
                             if instrument:
-                                api_values['issuer_name'] = instrument.get('issuerName', '')
+                                # Only get issuer name if not already from basic data
+                                if not api_values['issuer_name']:
+                                    api_values['issuer_name'] = instrument.get('issuerName', '')
+                                
                                 api_values['seniority'] = instrument.get('seniorityRepayment', '')
                                 api_values['secured_or_unsecured'] = instrument.get('secured', '')
-                                api_values['issue_price'] = instrument.get('issuePrice', '')
-                                api_values['face_value'] = instrument.get('faceValue', '')
-                                api_values['total_issue_size_cr'] = instrument.get('totalIssueSize', '')
-                                api_values['redemption_date'] = instrument.get('redemptionDate', '')
-                                api_values['payin_date'] = instrument.get('allotmentDate', '')
+                                
+                                # Handle issue price
+                                issue_price = instrument.get('issuePrice', '')
+                                if issue_price:
+                                    api_values['issue_price'] = str(issue_price)
+                                
+                                # Handle face value
+                                face_value = instrument.get('faceValue', '')
+                                if face_value:
+                                    api_values['face_value'] = str(face_value)
+                                
+                                # Handle total issue size
+                                total_issue_size = instrument.get('totalIssueSize', '')
+                                if total_issue_size:
+                                    api_values['total_issue_size_cr'] = str(total_issue_size)
+                                
+                                # Only override dates if we didn't get from basic data
+                                if not api_values['payin_date']:
+                                    api_values['payin_date'] = instrument.get('allotmentDate', '')
+                                if not api_values['redemption_date']:
+                                    api_values['redemption_date'] = instrument.get('redemptionDate', '')
                 
-                # 2. Get coupon data for coupon_fixed
+                # 3. Get coupon data for coupon_fixed
                 coupon_data = self.get_coupon_data(isin)
                 if coupon_data and isinstance(coupon_data, dict):
+                    # Try different response structures
                     if 'coupensVo' in coupon_data:
                         coupens_vo = coupon_data['coupensVo']
                         if 'couponDetails' in coupens_vo:
                             coupon_details = coupens_vo['couponDetails']
                             if coupon_details:
-                                api_values['coupon_fixed'] = coupon_details.get('couponRate', '')
+                                coupon_rate = coupon_details.get('couponRate', '')
+                                # Handle percentage values
+                                if coupon_rate and str(coupon_rate).strip():
+                                    api_values['coupon_fixed'] = str(coupon_rate).strip()
+                                    # Add % sign if not present
+                                    if '%' not in api_values['coupon_fixed']:
+                                        api_values['coupon_fixed'] += '%'
                 
-                # 3. Get listing data for listed/unlisted and exchange
+                # 4. Get listing data for listed/unlisted and exchange
                 listing_data = self.get_listing_data(isin)
                 if listing_data and isinstance(listing_data, dict):
                     # Try different response structures
@@ -847,10 +939,10 @@ class NSDLBondAnalyzer:
             except Exception as e:
                 st.warning(f"Error fetching data for {isin}: {str(e)[:100]}")
             
-            # Compare each field
+            # Compare each field with updated data types
             result_row = {'ISIN': isin}
             
-            # Define comparison order as per requirement
+            # Define comparison order with proper data types
             comparison_fields = [
                 ('issuer_name', 'ISSUER_NAME', 'text'),
                 ('seniority', 'SENIORITY', 'text'),
@@ -868,6 +960,33 @@ class NSDLBondAnalyzer:
             for file_key, output_suffix, data_type in comparison_fields:
                 file_val = file_values.get(file_key)
                 api_val = api_values.get(file_key)
+                
+                # Clean file values for specific fields
+                if file_key == 'coupon_fixed' and file_val:
+                    # Convert to string and clean
+                    file_val_str = str(file_val).strip()
+                    # Remove trailing zeros and ensure consistent format
+                    try:
+                        if '%' in file_val_str:
+                            # Already has %, just clean
+                            file_val = file_val_str
+                        else:
+                            # Add % if it's a number
+                            file_num = float(re.sub(r'[%\s,]', '', file_val_str))
+                            file_val = f"{file_num}%"
+                    except:
+                        file_val = file_val_str
+                
+                # Clean API values for specific fields
+                if file_key == 'coupon_fixed' and api_val:
+                    # Ensure API value has % sign
+                    api_val_str = str(api_val).strip()
+                    if '%' not in api_val_str and api_val_str:
+                        try:
+                            api_num = float(re.sub(r'[%\s,]', '', api_val_str))
+                            api_val = f"{api_num}%"
+                        except:
+                            api_val = api_val_str
                 
                 status, notes = self.compare_values(file_val, api_val, data_type)
                 
@@ -898,6 +1017,55 @@ class NSDLBondAnalyzer:
         return pd.DataFrame()
     
     # ====================== RATING GENERATION ======================
+    
+    def clean_rating(self, rating: str) -> str:
+        """Clean and format rating string"""
+        if not rating or pd.isna(rating):
+            return ""
+        
+        rating_str = str(rating).strip()
+        
+        # Remove PP-MLD / PPMLD / PP MLD
+        rating_str = re.sub(r'^(PP[-\s]?MLD\s*)', '', rating_str, flags=re.IGNORECASE)
+        
+        # Add space before (CE)
+        rating_str = re.sub(r'\s*\(CE\)', ' (CE)', rating_str, flags=re.IGNORECASE)
+        
+        # Remove double spaces
+        rating_str = re.sub(r'\s+', ' ', rating_str)
+        
+        return rating_str.strip()
+    
+    def map_agency_name(self, agency_name: str) -> str:
+        """Map full agency name to short code"""
+        if not agency_name:
+            return ""
+            
+        agency_upper = agency_name.upper()
+        
+        for full_name, short_code in self.rating_agency_mapping.items():
+            if full_name.upper() in agency_upper or agency_upper in full_name.upper():
+                return short_code
+        
+        # Check for partial matches
+        if "CRISIL" in agency_upper:
+            return "CRISIL"
+        elif "CARE" in agency_upper:
+            return "CARE"
+        elif "ICRA" in agency_upper:
+            return "ICRA"
+        elif "IND" in agency_upper or "INDIA RATING" in agency_upper:
+            return "IND"
+        elif "ACUITE" in agency_upper:
+            return "ACUITE"
+        elif "BWR" in agency_upper or "BRICKWORK" in agency_upper:
+            return "BWR"
+        elif "SMERA" in agency_upper:
+            return "SMERA"
+        elif "IVR" in agency_upper or "INFOMERICS" in agency_upper:
+            return "IVR"
+        
+        return ""
     
     def extract_credit_rating_info(self, rating_data: Dict, isin: str) -> Dict:
         """Extract credit rating information from API response"""
@@ -1548,17 +1716,17 @@ def main():
         
         sample_data = pd.DataFrame({
             'ISIN': ['INE225R08014', 'INE002Z08044', 'INE003L07184'],
-            'issuer_name': ['Example Issuer 1', 'Example Issuer 2', 'Example Issuer 3'],
+            'issuer_name': ['HDFC ERGO GENERAL INSURANCE COMPANY LIMITED', 'Example Issuer 2', 'Example Issuer 3'],
             'seniority': ['Secured', 'Unsecured', 'Secured'],
             'secured_or_unsecured': ['Secured', 'Unsecured', 'Secured'],
-            'coupon_fixed': ['8.65', 'N.A', '7.5'],
+            'coupon_fixed': ['7.72', 'N.A', '7.5'],
             'issue_price': [100, 100, 100],
             'face_value': [100, 100, 100],
             'total_issue_size_cr': [1000, 500, 750],
             'listed_or_unlisted': ['LISTED', 'UNLISTED', 'LISTED'],
             'listing_exchange': ['BSE', '', 'NSE : BSE'],
-            'redemption_date': ['15-12-2030', '20-05-2028', '30-09-2035'],
-            'payin_date': ['01-01-2022', '15-03-2021', '30-06-2023']
+            'redemption_date': ['2023-11-07 00:00:00', '20-05-2028', '30-09-2035'],
+            'payin_date': ['2022-01-01', '15-03-2021', '30-06-2023']
         })
         
         st.markdown('<div class="sample-table">', unsafe_allow_html=True)
@@ -1581,10 +1749,16 @@ def main():
             st.markdown(f'<div class="step-item"><div class="step-number">{idx}</div><div>{step}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("### 🎯 Comparison Features")
+        st.markdown("### 🎯 Smart Comparison Features")
         st.markdown("""
         <div class="info-box">
-            <strong>✅ Column Comparison:</strong><br>
+            <strong>✅ Intelligent Data Matching:</strong><br>
+            • **Dates**: Multiple format support (YYYY-MM-DD, DD-MM-YYYY, etc.)<br>
+            • **Percentages**: 7.72 = 7.72% → MATCH<br>
+            • **Numbers**: Floating point tolerance<br>
+            • **Text**: Case-insensitive comparison<br><br>
+            
+            <strong>📊 Comparison Columns:</strong><br>
             • **issuer_name** - Issuer name comparison<br>
             • **seniority** - Seniority status<br>
             • **secured_or_unsecured** - Security type<br>
@@ -1595,13 +1769,7 @@ def main():
             • **listed_or_unlisted** - Listing status<br>
             • **listing_exchange** - Exchange(s) listed on<br>
             • **redemption_date** - Redemption date<br>
-            • **payin_date** - Pay-in date<br><br>
-            
-            <strong>📊 Output Format:</strong><br>
-            • FILE value from your input<br>
-            • API value from NSDL<br>
-            • STATUS (MATCH/MISMATCH/MISSING)<br>
-            • NOTES for discrepancies
+            • **payin_date** - Pay-in date
         </div>
         """, unsafe_allow_html=True)
 
