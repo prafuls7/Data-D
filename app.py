@@ -493,17 +493,20 @@ class NSDLBondAnalyzer:
         self.progress_bar = progress_bar
         self.status_text = status_text
         
-        # Column patterns for flexible matching
+        # Column patterns for flexible matching - UPDATED for all required columns
         self.column_patterns = {
             'isin': ['isin', 'ISIN'],
+            'issuer_name': ['issuer name', 'ISSUER NAME', 'Issuer Name', 'issuer_name'],
             'seniority': ['seniority', 'SENIORITY', 'Seniority'],
+            'secured_or_unsecured': ['secured_or_unsecured', 'SECURED/UNSECURED', 'Secured/Unsecured'],
             'coupon_fixed': ['coupon_fixed', 'Coupon_fixed', 'Coupon Fixed', 'coupon fixed', 'Coupon'],
-            'secured_or_unsecured' : ['secured_or_unsecured'],
-            'pay_in_date_1': ['pay-in date_1', 'pay in date_1', 'payin date_1', 'pay_in_date_1', 'payin date'],
-            'redemption_date_1': ['redemption date_1', 'Redemption date_1', 'redemption_date_1', 'redemption date'],
             'issue_price': ['issue price', 'ISSUE PRICE', 'issue_price', 'Issue Price'],
             'face_value': ['face value', 'FACE VALUE', 'face_value', 'Face Value'],
-            'total_issue_size': ['total issue size', 'TOTAL ISSUE SIZE', 'total_issue_size', 'Total Issue Size']
+            'total_issue_size_cr': ['total issue size', 'TOTAL ISSUE SIZE', 'total_issue_size', 'Total Issue Size', 'total_issue_size_cr'],
+            'listed_or_unlisted': ['listed_or_unlisted', 'LISTED/UNLISTED', 'Listed/Unlisted'],
+            'listing_exchange': ['listing_exchange', 'LISTING EXCHANGE', 'Listing Exchange'],
+            'redemption_date': ['redemption date', 'Redemption date', 'redemption_date', 'redemption_date_1'],
+            'payin_date': ['payin date', 'pay-in date', 'payin_date', 'pay_in_date_1']
         }
         
         # Define comprehensive bond data columns
@@ -655,6 +658,11 @@ class NSDLBondAnalyzer:
         url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/instruments?isin={isin}"
         return self.fetch_api_data(url)
     
+    def get_listing_data(self, isin):
+        """Get listing details from NSDL"""
+        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/listings?isin={isin}"
+        return self.fetch_api_data(url)
+    
     def get_rating_data(self, isin):
         """Get credit rating data"""
         url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/credit-ratings?isin={isin}"
@@ -666,70 +674,230 @@ class NSDLBondAnalyzer:
         return self.fetch_api_data(url)
     
     def get_coupon_data(self, isin):
-        """Get coupon details from NSDL - UPDATED for step up/down"""
+        """Get coupon details from NSDL"""
         url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/coupondetail?isin={isin}"
         return self.fetch_api_data(url)
     
     def get_redemption_data(self, isin):
-        """Get redemption details from NSDL - UPDATED for call/put options"""
+        """Get redemption details from NSDL"""
         url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/redemptions?isin={isin}"
         return self.fetch_api_data(url)
     
-    def get_listing_data(self, isin):
-        """Get listing details from NSDL"""
-        url = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/listings?isin={isin}"
-        return self.fetch_api_data(url)
-    
-    # ====================== CURRENT RATING FUNCTIONS ======================
-    
-    def clean_rating(self, rating: str) -> str:
-        """Clean and format rating string"""
-        if not rating or pd.isna(rating):
-            return ""
+    def extract_listing_info(self, listing_data):
+        """Extract listing information from API response"""
+        listed_or_unlisted = 'UNLISTED'
+        listing_exchange = ''
         
-        rating_str = str(rating).strip()
-        
-        # Remove PP-MLD / PPMLD / PP MLD
-        rating_str = re.sub(r'^(PP[-\s]?MLD\s*)', '', rating_str, flags=re.IGNORECASE)
-        
-        # Add space before (CE)
-        rating_str = re.sub(r'\s*\(CE\)', ' (CE)', rating_str, flags=re.IGNORECASE)
-        
-        # Remove double spaces
-        rating_str = re.sub(r'\s+', ' ', rating_str)
-        
-        return rating_str.strip()
-    
-    def map_agency_name(self, agency_name: str) -> str:
-        """Map full agency name to short code"""
-        if not agency_name:
-            return ""
+        if listing_data and isinstance(listing_data, dict):
+            # Get listing status
+            listing_status = listing_data.get('listingStatus', '')
+            if listing_status and str(listing_status).strip().upper() == 'LISTED':
+                listed_or_unlisted = 'LISTED'
             
-        agency_upper = agency_name.upper()
+            # Get listing exchanges from listingDetails (NOT from earlierListingDetails)
+            listing_details = listing_data.get('listingDetails', [])
+            if isinstance(listing_details, list) and listing_details:
+                exchanges = set()
+                for detail in listing_details:
+                    exchange_name = detail.get('exchangeName', '')
+                    if exchange_name and str(exchange_name).strip():
+                        exchanges.add(str(exchange_name).strip().upper())
+                
+                # Join exchanges with colon separator
+                if exchanges:
+                    listing_exchange = ' : '.join(sorted(exchanges))
         
-        for full_name, short_code in self.rating_agency_mapping.items():
-            if full_name.upper() in agency_upper or agency_upper in full_name.upper():
-                return short_code
+        return listed_or_unlisted, listing_exchange
+    
+    def compare_values(self, val1, val2, data_type='text'):
+        """Compare two values and return status"""
+        try:
+            # Handle missing values
+            if pd.isna(val1) or val1 is None or str(val1).strip() == '':
+                return 'MISSING', 'File value missing'
+            
+            if pd.isna(val2) or val2 is None or str(val2).strip() == '':
+                return 'MISSING', 'API value missing'
+            
+            # Clean values based on type
+            if data_type == 'date':
+                # Try to parse dates
+                try:
+                    val1_clean = pd.to_datetime(val1).strftime('%d-%m-%Y')
+                    val2_clean = pd.to_datetime(val2).strftime('%d-%m-%Y')
+                except:
+                    val1_clean = str(val1).strip()
+                    val2_clean = str(val2).strip()
+            elif data_type in ['number', 'float']:
+                try:
+                    val1_clean = float(str(val1).replace(',', ''))
+                    val2_clean = float(str(val2).replace(',', ''))
+                except:
+                    val1_clean = str(val1).strip()
+                    val2_clean = str(val2).strip()
+            else:
+                val1_clean = str(val1).strip().lower()
+                val2_clean = str(val2).strip().lower()
+            
+            # Compare
+            if val1_clean == val2_clean:
+                return 'MATCH', ''
+            else:
+                return 'MISMATCH', f'File: {val1}, API: {val2}'
+        except:
+            return 'ERROR', 'Comparison error'
+    
+    def perform_comparison(self, df, delay=0.5):
+        """Perform comparison of columns with NSDL data - UPDATED for all required columns"""
+        results = []
         
-        # Check for partial matches
-        if "CRISIL" in agency_upper:
-            return "CRISIL"
-        elif "CARE" in agency_upper:
-            return "CARE"
-        elif "ICRA" in agency_upper:
-            return "ICRA"
-        elif "IND" in agency_upper or "INDIA RATING" in agency_upper:
-            return "IND"
-        elif "ACUITE" in agency_upper:
-            return "ACUITE"
-        elif "BWR" in agency_upper or "BRICKWORK" in agency_upper:
-            return "BWR"
-        elif "SMERA" in agency_upper:
-            return "SMERA"
-        elif "IVR" in agency_upper or "INFOMERICS" in agency_upper:
-            return "IVR"
+        # Find all columns in the input file
+        col_mapping = {}
+        for key in self.column_patterns.keys():
+            col_name = self.find_column_name(df.columns.tolist(), self.column_patterns[key])
+            col_mapping[key] = col_name
         
-        return ""
+        # Check if ISIN column exists
+        isin_col = col_mapping.get('isin')
+        if not isin_col:
+            st.error("❌ ERROR: No ISIN column found in the file!")
+            st.info("Please ensure your file has a column named 'ISIN' or 'isin'")
+            return None
+        
+        total_rows = len(df)
+        
+        for idx, row in df.iterrows():
+            isin = str(row[isin_col]).strip()
+            if not isin or isin.lower() == 'nan':
+                continue
+            
+            # Update progress
+            progress_pct = (idx + 1) / total_rows
+            self.update_progress(f"Processing ISIN {idx+1}/{total_rows}", progress_pct)
+            
+            # Extract file values
+            file_values = {}
+            for key, col_name in col_mapping.items():
+                if col_name and col_name in row:
+                    file_values[key] = row[col_name]
+                else:
+                    file_values[key] = None
+            
+            # Initialize API values
+            api_values = {
+                'isin': isin,
+                'issuer_name': '',
+                'seniority': '',
+                'secured_or_unsecured': '',
+                'coupon_fixed': '',
+                'issue_price': '',
+                'face_value': '',
+                'total_issue_size_cr': '',
+                'listed_or_unlisted': 'UNLISTED',
+                'listing_exchange': '',
+                'redemption_date': '',
+                'payin_date': ''
+            }
+            
+            try:
+                # 1. Get instrument data
+                instrument_data = self.get_instrument_data(isin)
+                
+                if instrument_data and isinstance(instrument_data, dict):
+                    # Extract from different possible structures
+                    if 'instrumentsVo' in instrument_data:
+                        instruments_vo = instrument_data['instrumentsVo']
+                        if 'instruments' in instruments_vo:
+                            instrument = instruments_vo['instruments']
+                            
+                            if instrument:
+                                api_values['issuer_name'] = instrument.get('issuerName', '')
+                                api_values['seniority'] = instrument.get('seniorityRepayment', '')
+                                api_values['secured_or_unsecured'] = instrument.get('secured', '')
+                                api_values['issue_price'] = instrument.get('issuePrice', '')
+                                api_values['face_value'] = instrument.get('faceValue', '')
+                                api_values['total_issue_size_cr'] = instrument.get('totalIssueSize', '')
+                                api_values['redemption_date'] = instrument.get('redemptionDate', '')
+                                api_values['payin_date'] = instrument.get('allotmentDate', '')
+                
+                # 2. Get coupon data for coupon_fixed
+                coupon_data = self.get_coupon_data(isin)
+                if coupon_data and isinstance(coupon_data, dict):
+                    if 'coupensVo' in coupon_data:
+                        coupens_vo = coupon_data['coupensVo']
+                        if 'couponDetails' in coupens_vo:
+                            coupon_details = coupens_vo['couponDetails']
+                            if coupon_details:
+                                api_values['coupon_fixed'] = coupon_details.get('couponRate', '')
+                
+                # 3. Get listing data for listed/unlisted and exchange
+                listing_data = self.get_listing_data(isin)
+                if listing_data and isinstance(listing_data, dict):
+                    # Try different response structures
+                    if 'listingDetailVo' in listing_data:
+                        listing_detail = listing_data['listingDetailVo']
+                        listed_status, exchanges = self.extract_listing_info(listing_detail)
+                        api_values['listed_or_unlisted'] = listed_status
+                        api_values['listing_exchange'] = exchanges
+                    elif 'listingStatus' in listing_data:
+                        listed_status, exchanges = self.extract_listing_info(listing_data)
+                        api_values['listed_or_unlisted'] = listed_status
+                        api_values['listing_exchange'] = exchanges
+                
+            except Exception as e:
+                st.warning(f"Error fetching data for {isin}: {str(e)[:100]}")
+            
+            # Compare each field
+            result_row = {'ISIN': isin}
+            
+            # Define comparison order as per requirement
+            comparison_fields = [
+                ('issuer_name', 'ISSUER_NAME', 'text'),
+                ('seniority', 'SENIORITY', 'text'),
+                ('secured_or_unsecured', 'SECURED_UNSECURED', 'text'),
+                ('coupon_fixed', 'COUPON_FIXED', 'text'),
+                ('issue_price', 'ISSUE_PRICE', 'number'),
+                ('face_value', 'FACE_VALUE', 'number'),
+                ('total_issue_size_cr', 'TOTAL_ISSUE_SIZE_CR', 'number'),
+                ('listed_or_unlisted', 'LISTED_UNLISTED', 'text'),
+                ('listing_exchange', 'LISTING_EXCHANGE', 'text'),
+                ('redemption_date', 'REDEMPTION_DATE', 'date'),
+                ('payin_date', 'PAYIN_DATE', 'date')
+            ]
+            
+            for file_key, output_suffix, data_type in comparison_fields:
+                file_val = file_values.get(file_key)
+                api_val = api_values.get(file_key)
+                
+                status, notes = self.compare_values(file_val, api_val, data_type)
+                
+                result_row[f'{output_suffix}_FILE'] = file_val
+                result_row[f'{output_suffix}_API'] = api_val
+                result_row[f'{output_suffix}_STATUS'] = status
+                result_row[f'{output_suffix}_NOTES'] = notes
+            
+            results.append(result_row)
+            
+            # Rate limiting with random delay
+            time.sleep(delay + random.uniform(0, 0.3))
+        
+        # Create DataFrame with all columns
+        if results:
+            # Define column order
+            column_order = ['ISIN']
+            for file_key, output_suffix, _ in comparison_fields:
+                column_order.extend([
+                    f'{output_suffix}_FILE',
+                    f'{output_suffix}_API',
+                    f'{output_suffix}_STATUS',
+                    f'{output_suffix}_NOTES'
+                ])
+            
+            return pd.DataFrame(results, columns=column_order)
+        
+        return pd.DataFrame()
+    
+    # ====================== RATING GENERATION ======================
     
     def extract_credit_rating_info(self, rating_data: Dict, isin: str) -> Dict:
         """Extract credit rating information from API response"""
@@ -809,10 +977,6 @@ class NSDLBondAnalyzer:
                 'date': verification_date
             }
         
-        ordered_outlooks = []
-        ordered_links = []
-        ordered_dates = []
-        
         for agency in agency_order:
             if agency in agency_data:
                 data = agency_data[agency]
@@ -849,47 +1013,124 @@ class NSDLBondAnalyzer:
                     result['Current_RATING_8'] = data['rating']
                     result['Current_IVR'] = "IVR"
                     result['Outlook8'] = data['outlook']
-                
-                if data['outlook']:
-                    ordered_outlooks.append(data['outlook'])
-                if data['link']:
-                    ordered_links.append(data['link'])
-                if data['date']:
-                    ordered_dates.append(data['date'])
-        
-        valid_outlooks = [str(o).strip() for o in ordered_outlooks if str(o).strip()]
-        valid_links = [str(l).strip() for l in ordered_links if str(l).strip()]
-        valid_dates = [str(d).strip() for d in ordered_dates if str(d).strip()]
-        
-        result['Outlook'] = ', '.join(valid_outlooks)
-        result['pressReleaseLink'] = ', '.join(valid_links)
-        
-        if valid_dates:
-            try:
-                date_objs = []
-                for date_str in valid_dates:
-                    try:
-                        date_objs.append(datetime.strptime(date_str, '%d-%m-%Y'))
-                    except:
-                        try:
-                            date_objs.append(datetime.strptime(date_str, '%Y-%m-%d'))
-                        except:
-                            continue
-                
-                if date_objs:
-                    latest_date = max(date_objs)
-                    result['Date_of_Verification'] = latest_date.strftime('%d-%m-%Y')
-                else:
-                    result['Date_of_Verification'] = valid_dates[0]
-            except:
-                result['Date_of_Verification'] = valid_dates[0]
         
         return result
     
-    # ====================== MAIN PROCESSING FUNCTIONS - UPDATED ======================
+    def generate_ratings(self, df, delay=0.5):
+        """Generate rating information for ISINs"""
+        results = []
+        
+        # Find ISIN column
+        isin_col = self.find_column_name(df.columns.tolist(), self.column_patterns['isin'])
+        if not isin_col:
+            st.error("❌ ERROR: No ISIN column found!")
+            return None
+        
+        total_rows = len(df)
+        
+        for idx, row in df.iterrows():
+            isin = str(row[isin_col]).strip()
+            if not isin or isin.lower() == 'nan':
+                continue
+            
+            # Update progress
+            progress_pct = (idx + 1) / total_rows
+            self.update_progress(f"Getting ratings {idx+1}/{total_rows}", progress_pct)
+            
+            # Fetch rating data
+            rating_data = self.get_rating_data(isin)
+            
+            # Extract credit rating info
+            credit_info = self.extract_credit_rating_info(rating_data, isin)
+            results.append(credit_info)
+            
+            # Rate limiting with random delay
+            time.sleep(delay + random.uniform(0, 0.3))
+        
+        # Define column order
+        column_order = [
+            'ISIN', 'Outlook', 'Restructured_isin', 'Date_of_Verification', 'pressReleaseLink',
+            'Current_RATING_1', 'Current_CRISIL', 'Outlook1',
+            'Current_RATING_2', 'Current_CARE', 'Outlook2',
+            'Current_RATING_3', 'Current_ICRA', 'Outlook3',
+            'Current_RATING_4', 'Current_IND', 'Outlook4',
+            'Current_RATING_5', 'Current_ACUITE', 'Outlook5',
+            'Current_RATING_6', 'Current_BWR', 'Outlook6',
+            'Current_RATING_7', 'Current_SMERA', 'Outlook7',
+            'Current_RATING_8', 'Current_IVR', 'Outlook8'
+        ]
+        
+        # Create DataFrame with proper column order
+        if results:
+            result_df = pd.DataFrame(results)
+            # Ensure all columns exist
+            for col in column_order:
+                if col not in result_df.columns:
+                    result_df[col] = ''
+            
+            return result_df[column_order]
+        
+        return pd.DataFrame(columns=column_order)
+    
+    # ====================== MATURED/RESTRUCTURED CHECK ======================
+    
+    def generate_matured_restructured(self, df, delay=0.5):
+        """Generate matured/restructured information"""
+        results = []
+        
+        # Find ISIN column
+        isin_col = self.find_column_name(df.columns.tolist(), self.column_patterns['isin'])
+        if not isin_col:
+            st.error("❌ ERROR: No ISIN column found!")
+            return None
+        
+        total_rows = len(df)
+        
+        for idx, row in df.iterrows():
+            isin = str(row[isin_col]).strip()
+            if not isin or isin.lower() == 'nan':
+                continue
+            
+            # Update progress
+            progress_pct = (idx + 1) / total_rows
+            self.update_progress(f"Checking status {idx+1}/{total_rows}", progress_pct)
+            
+            # Fetch data
+            data = self.get_matured_restructured_data(isin)
+            
+            status = ''
+            new_isin = ''
+            
+            if data and 'data' in data:
+                bond_data = data['data']
+                if isinstance(bond_data, list) and len(bond_data) > 0:
+                    bond_info = bond_data[0]
+                    # Check if restructured
+                    if bond_info.get('restructuredStatus') == 'Y':
+                        status = 'RESTRUCTURED'
+                        new_isin = bond_info.get('newIsin', '')
+                    else:
+                        status = 'ACTIVE'
+                else:
+                    status = 'NOT FOUND'
+            else:
+                status = 'API ERROR'
+            
+            results.append({
+                'ISIN': isin,
+                'Matured/Restructured': status,
+                'NewISIN': new_isin
+            })
+            
+            # Rate limiting with random delay
+            time.sleep(delay + random.uniform(0, 0.3))
+        
+        return pd.DataFrame(results)
+    
+    # ====================== COMPREHENSIVE DATA EXTRACTION ======================
     
     def extract_comprehensive_data(self, isin):
-        """Extract comprehensive bond data from NSDL APIs - UPDATED for all fields"""
+        """Extract comprehensive bond data from NSDL APIs"""
         bond_data = {col: '' for col in self.comprehensive_columns}
         bond_data['ISIN'] = isin
         bond_data['suspended'] = 'No'
@@ -911,7 +1152,6 @@ class NSDLBondAnalyzer:
                     # Check for restructured
                     if basic_data.get('restructuredStatus') == 'Y':
                         bond_data['restructured'] = 'Yes'
-                        bond_data['NEW_ISIN'] = basic_data.get('newIsin', '')
             
             # 2. Instrument Details - Main API
             url2 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/instruments?isin={isin}"
@@ -957,211 +1197,29 @@ class NSDLBondAnalyzer:
                                 bond_data['Redemption details Redemption date_1'] = dt.strftime('%d-%b-%Y')
                             except:
                                 bond_data['Redemption details Redemption date_1'] = redemption_date
-                        
-                        # Credit Enhancement
-                        if 'creditEnhancement' in instruments_vo:
-                            credit_enhance = instruments_vo['creditEnhancement']
-                            bond_data['Guarantee Details GUARANTEE'] = credit_enhance.get('guarantee', '')
-                            bond_data['CREDIT ENHANCEMENT'] = credit_enhance.get('creditEnhancementAvailed', '')
-                            
-                            if 'guaranteeDetails' in credit_enhance and credit_enhance['guaranteeDetails']:
-                                for guarantor in credit_enhance['guaranteeDetails']:
-                                    if guarantor.get('guaranteedBy'):
-                                        bond_data['Guarantee Details GUARANTOR'] = guarantor.get('guaranteedBy', '')
-                                        guarantee_percent = guarantor.get('guaranteePercent', '')
-                                        bond_data['Guarantee Details percent_GUARANTEE'] = str(guarantee_percent) if guarantee_percent else ''
-                                        break
-                        
-                        # Asset Cover
-                        if 'assetCover' in instruments_vo:
-                            asset_cover = instruments_vo['assetCover']
-                            asset_cvr = asset_cover.get('assetCvrPercent', '')
-                            bond_data['SECURITY COVER'] = str(asset_cvr) if asset_cvr else ''
-                            
-                            if 'assetList' in asset_cover and asset_cover['assetList']:
-                                security_details = []
-                                for asset in asset_cover['assetList']:
-                                    details = asset.get('securityDetails', '')
-                                    if details:
-                                        security_details.append(details)
-                                if security_details:
-                                    bond_data['Description_of_Security'] = ' | '.join(security_details)
             
-            # 3. Coupon Details - STEP UP/DOWN DATA
-            url3 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/coupondetail?isin={isin}"
+            # 3. Listing Details
+            url3 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/listings?isin={isin}"
             data3 = self.fetch_api_data(url3)
             
             if data3 and isinstance(data3, dict):
-                # Extract from different possible structures
-                coupens_vo = data3.get('coupensVo', {})
-                if coupens_vo:
-                    # Coupon details
-                    coupon_details = coupens_vo.get('couponDetails', {})
-                    if coupon_details:
-                        bond_data['Coupon details Coupon_fixed'] = coupon_details.get('couponRate', '')
-                        freq = coupon_details.get('interestPaymentFrequency', '')
-                        bond_data['Coupon frequency'] = freq
-                        
-                        # Map frequency to number
-                        freq_map = {
-                            'Monthly': '12',
-                            'Quarterly': '4',
-                            'Half Yearly': '2',
-                            'Yearly': '1',
-                            'Annual': '1',
-                            'Semi-Annual': '2',
-                            'Bi-Annual': '2',
-                            'At Maturity': '0'
-                        }
-                        
-                        freq_num = '0'
-                        for key, value in freq_map.items():
-                            if key.lower() in str(freq).lower():
-                                freq_num = value
-                                break
-                        bond_data['COUPON FREQUENCY_NUMBER'] = freq_num
-                    
-                    # Coupon basic details for reset info
-                    if 'coupenBasicVo' in coupens_vo and coupens_vo['coupenBasicVo']:
-                        for basic in coupens_vo['coupenBasicVo']:
-                            bond_data['Coupoun reset Rate'] = basic.get('resetRate', '')
-                            bond_data['Coupoun reset Condition'] = basic.get('benchmarkIndex', '')
-                            bond_data['Coupoun reset Date'] = basic.get('resetDate', '')
-                            bond_data['Coupon details coupon_floating'] = basic.get('baseRate', '')
-                            break
-                    
-                    # STEP UP/DOWN DATA - CORRECTED
-                    step_status = coupens_vo.get('stepStatus', {})
-                    if step_status:
-                        # Step Up
-                        if step_status.get('stepUpAvail') == 'Y' and 'stepUp' in step_status and step_status['stepUp']:
-                            step_up_list = step_status['stepUp']
-                            if isinstance(step_up_list, list) and len(step_up_list) > 0:
-                                step_up = step_up_list[0]
-                                bond_data['Step up Rate'] = step_up.get('resetRateStepUp', '')
-                                bond_data['Step up Condition'] = step_up.get('typeOfStepUp', '')
-                                bond_data['Step up Date'] = step_up.get('resetDateStepUp', '')
-                        
-                        # Step Down
-                        if step_status.get('stepDownAvail') == 'Y' and 'stepDown' in step_status and step_status['stepDown']:
-                            step_down_list = step_status['stepDown']
-                            if isinstance(step_down_list, list) and len(step_down_list) > 0:
-                                step_down = step_down_list[0]
-                                bond_data['Step down Rate'] = step_down.get('resetRateStepDown', '')
-                                bond_data['Step down Condition'] = step_down.get('typeOfStepDown', '')
-                                bond_data['Step down Date'] = step_down.get('resetDateStepDown', '')
+                # Try different response structures
+                if 'listingDetailVo' in data3:
+                    listing_detail = data3['listingDetailVo']
+                    listed_status, exchanges = self.extract_listing_info(listing_detail)
+                    bond_data['LISTED/UNLISTED'] = listed_status
+                    bond_data['LISTING EXCHANGE'] = exchanges
+                elif 'listingStatus' in data3:
+                    listed_status, exchanges = self.extract_listing_info(data3)
+                    bond_data['LISTED/UNLISTED'] = listed_status
+                    bond_data['LISTING EXCHANGE'] = exchanges
             
-            # 4. Redemption Details - CALL/PUT OPTIONS DATA
-            url4 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/redemptions?isin={isin}"
+            # 4. Credit Ratings
+            url4 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/credit-ratings?isin={isin}"
             data4 = self.fetch_api_data(url4)
             
-            if data4 and isinstance(data4, dict):
-                redemption_detail_vo = data4.get('redemptionDetailVo', {})
-                if redemption_detail_vo:
-                    # Redemption Type
-                    redemption_type = redemption_detail_vo.get('redemptionType', '')
-                    bond_data['Redemption details Redemption type'] = redemption_type
-                    
-                    # Determine Full/Partial
-                    if 'Partial' in str(redemption_type):
-                        bond_data['Redemption_Full/ Partial'] = 'Partial'
-                        bond_data['Partial Redemption / Partly Redeem'] = 'Yes'
-                    else:
-                        bond_data['Redemption_Full/ Partial'] = 'Bullet'
-                        bond_data['Partial Redemption / Partly Redeem'] = 'No'
-                    
-                    # Redemption Premium
-                    bond_data['Redemption details Redemption Premium'] = redemption_detail_vo.get('premiumAmount', '')
-                    
-                    # PUT OPTION DATA - CORRECTED
-                    if 'putOption' in redemption_detail_vo:
-                        put_option = redemption_detail_vo['putOption']
-                        put_dates = put_option.get('specifiedDates', '')
-                        
-                        # Handle both string and list formats
-                        if isinstance(put_dates, list) and len(put_dates) > 0:
-                            bond_data['Put option Date'] = put_dates[0]
-                        else:
-                            bond_data['Put option Date'] = str(put_dates)
-                        
-                        bond_data['Put option Price'] = put_option.get('price', '')
-                        
-                        # Put description
-                        put_desc_parts = []
-                        if put_option.get('deadlineDate'):
-                            put_desc_parts.append(f"Deadline: {put_option['deadlineDate']}")
-                        if put_option.get('notificationTime'):
-                            put_desc_parts.append(f"Notification Time: {put_option['notificationTime']}")
-                        if put_option.get('additionalDetails'):
-                            put_desc_parts.append(f"Details: {put_option['additionalDetails']}")
-                        
-                        if put_desc_parts:
-                            bond_data['put_description'] = ' | '.join(put_desc_parts)
-                    
-                    # CALL OPTION DATA - CORRECTED
-                    if 'callOption' in redemption_detail_vo:
-                        call_option = redemption_detail_vo['callOption']
-                        call_dates = call_option.get('specifiedDates', '')
-                        
-                        # Handle both string and list formats
-                        if isinstance(call_dates, list) and len(call_dates) > 0:
-                            bond_data['Call option Date'] = call_dates[0]
-                        else:
-                            bond_data['Call option Date'] = str(call_dates)
-                        
-                        bond_data['Call option Price'] = call_option.get('price', '')
-                        
-                        # Call description
-                        call_desc_parts = []
-                        if call_option.get('deadlineDate'):
-                            call_desc_parts.append(f"Deadline: {call_option['deadlineDate']}")
-                        if call_option.get('notificationTime'):
-                            call_desc_parts.append(f"Notification Time: {call_option['notificationTime']}")
-                        if call_option.get('additionalDetails'):
-                            call_desc_parts.append(f"Details: {call_option['additionalDetails']}")
-                        
-                        if call_desc_parts:
-                            bond_data['call_description'] = ' | '.join(call_desc_parts)
-                    
-                    # Check if put and call are same
-                    if bond_data['Put option Date'] and bond_data['Call option Date']:
-                        if bond_data['Put option Date'] == bond_data['Call option Date']:
-                            bond_data['IS_SAME_PUT_CALL'] = 'Y'
-                        else:
-                            bond_data['IS_SAME_PUT_CALL'] = 'N'
-                    
-                    # Redemption installments
-                    redemption_insts = redemption_detail_vo.get('redemptionInsts', [])
-                    if isinstance(redemption_insts, list):
-                        for i, inst in enumerate(redemption_insts[:2]):
-                            idx = i + 1
-                            bond_data[f'Redemption details Redemption date_{idx}'] = inst.get('redemptionDate', '')
-                            bond_data[f'Redemption details Redemption amt_{idx}'] = inst.get('redemptionAmt', '')
-            
-            # 5. Listing Details
-            url5 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/listings?isin={isin}"
-            data5 = self.fetch_api_data(url5)
-            
-            if data5 and isinstance(data5, dict):
-                listing_detail_vo = data5.get('listingDetailVo', {})
-                if listing_detail_vo:
-                    bond_data['LISTED/UNLISTED'] = listing_detail_vo.get('listingStatus', '')
-                    
-                    if 'listingDetails' in listing_detail_vo and listing_detail_vo['listingDetails']:
-                        exchanges = []
-                        for exchange in listing_detail_vo['listingDetails']:
-                            exchange_name = exchange.get('exchangeName', '')
-                            if exchange_name:
-                                exchanges.append(str(exchange_name))
-                        if exchanges:
-                            bond_data['LISTING EXCHANGE'] = ', '.join(exchanges)
-            
-            # 6. Credit Ratings
-            url6 = f"https://www.indiabondinfo.nsdl.com/bds-service/v1/public/bdsinfo/credit-ratings?isin={isin}"
-            data6 = self.fetch_api_data(url6)
-            
             # Get rating data using new function
-            credit_info = self.extract_credit_rating_info(data6, isin)
+            credit_info = self.extract_credit_rating_info(data4, isin)
             
             # Map new rating columns to comprehensive format
             bond_data['RATING_1'] = credit_info.get('Current_RATING_1', '')
@@ -1197,7 +1255,6 @@ class NSDLBondAnalyzer:
             
         except Exception as e:
             bond_data['ERROR'] = str(e)[:200]
-            st.error(f"Error extracting data for {isin}: {str(e)[:100]}")
         
         return bond_data
     
@@ -1242,9 +1299,6 @@ class NSDLBondAnalyzer:
             return result_df[self.comprehensive_columns]
         
         return pd.DataFrame(columns=self.comprehensive_columns)
-    
-    # Keep all other methods for comparison, ratings, etc.
-    # ... [Keep all other methods as they were] ...
 
 # Helper functions for file downloads
 def get_download_link(df, filename, file_label="Excel file"):
@@ -1289,14 +1343,12 @@ def main():
         st.markdown("#### Select Operations:")
         do_comprehensive = st.checkbox("📊 Comprehensive Bond Data Extraction", value=True,
                                       help="Extract 80+ bond parameters from NSDL APIs")
-        do_comparison = st.checkbox("🔍 Column Comparison", value=False, 
+        do_comparison = st.checkbox("🔍 Column Comparison", value=True, 
                                     help="Compare file data with NSDL API data")
-        do_ratings = st.checkbox("⭐ Rating Generation (New Logic)", value=False,
-                                help="Fetch credit ratings for each ISIN with Outlook1-8")
+        do_ratings = st.checkbox("⭐ Rating Generation", value=False,
+                                help="Fetch credit ratings for each ISIN")
         do_matured = st.checkbox("📅 Matured/Restructured Check", value=False,
                                 help="Check if bonds are matured or restructured")
-        do_record_dates = st.checkbox("📅 Record Date Generation", value=False,
-                                     help="Generate record dates with date differences")
         
         st.markdown("---")
         
@@ -1314,13 +1366,18 @@ def main():
         
         **Required column**: ISIN (or isin)
         
-        **Comprehensive extraction includes**:
-        - Basic Bond Information
-        - Coupon & Interest Details
-        - Redemption Information
-        - Rating & Credit Details
-        - Security & Guarantee Details
-        - Covenant Information
+        **Optional columns for comparison**:
+        - issuer_name
+        - seniority
+        - secured_or_unsecured
+        - coupon_fixed
+        - issue_price
+        - face_value
+        - total_issue_size_cr
+        - listed_or_unlisted
+        - listing_exchange
+        - redemption_date
+        - payin_date
         """)
         
         st.markdown("---")
@@ -1372,6 +1429,17 @@ def main():
                 with st.expander("👀 Preview first 5 rows"):
                     st.dataframe(df.head(), use_container_width=True)
                 
+                # Show column mapping
+                with st.expander("🔍 Column Mapping"):
+                    analyzer = NSDLBondAnalyzer()
+                    column_mapping = {}
+                    for key in analyzer.column_patterns.keys():
+                        col_name = analyzer.find_column_name(df.columns.tolist(), analyzer.column_patterns[key])
+                        column_mapping[key] = col_name or "NOT FOUND"
+                    
+                    mapping_df = pd.DataFrame(list(column_mapping.items()), columns=['Required Column', 'Found Column'])
+                    st.dataframe(mapping_df, use_container_width=True)
+                
                 # Process button
                 if st.button("🚀 Start Processing", type="primary", use_container_width=True):
                     # Create progress elements
@@ -1395,25 +1463,19 @@ def main():
                         with st.spinner("🔍 Performing column comparison..."):
                             comparison_df = analyzer.perform_comparison(df, delay)
                             if comparison_df is not None and not comparison_df.empty:
-                                results['Comparison'] = comparison_df
+                                results['Comparison_Report'] = comparison_df
                     
                     if do_ratings:
-                        with st.spinner("⭐ Fetching credit ratings (New Logic)..."):
+                        with st.spinner("⭐ Fetching credit ratings..."):
                             ratings_df = analyzer.generate_ratings(df, delay)
                             if ratings_df is not None and not ratings_df.empty:
-                                results['CurrentRating_New'] = ratings_df
+                                results['Credit_Ratings'] = ratings_df
                     
                     if do_matured:
                         with st.spinner("📅 Checking matured/restructured status..."):
                             matured_df = analyzer.generate_matured_restructured(df, delay)
                             if matured_df is not None and not matured_df.empty:
-                                results['MaturedRestructured'] = matured_df
-                    
-                    if do_record_dates:
-                        with st.spinner("📅 Generating record dates..."):
-                            record_dates_df = analyzer.generate_record_dates(df, delay)
-                            if record_dates_df is not None and not record_dates_df.empty:
-                                results['RecordDates'] = record_dates_df
+                                results['Matured_Restructured'] = matured_df
                     
                     # Complete progress
                     progress_bar.progress(1.0)
@@ -1482,14 +1544,21 @@ def main():
     
     with col2:
         # Sample data and instructions
-        st.markdown("### 📝 Sample Input Format")
+        st.markdown("### 📝 Sample Input Format for Comparison")
         
         sample_data = pd.DataFrame({
-            'ISIN': ['INE002A08567', 'INE002Z08044', 'INE003L07184'],
-            'SENIORITY': ['Secured', 'Unsecured', 'Secured'],
-            'Coupon_fixed': ['8.65', 'N.A', '7.5'],
-            'Issue Price': [100, 100, 100],
-            'Face Value': [100, 100, 100]
+            'ISIN': ['INE225R08014', 'INE002Z08044', 'INE003L07184'],
+            'issuer_name': ['Example Issuer 1', 'Example Issuer 2', 'Example Issuer 3'],
+            'seniority': ['Secured', 'Unsecured', 'Secured'],
+            'secured_or_unsecured': ['Secured', 'Unsecured', 'Secured'],
+            'coupon_fixed': ['8.65', 'N.A', '7.5'],
+            'issue_price': [100, 100, 100],
+            'face_value': [100, 100, 100],
+            'total_issue_size_cr': [1000, 500, 750],
+            'listed_or_unlisted': ['LISTED', 'UNLISTED', 'LISTED'],
+            'listing_exchange': ['BSE', '', 'NSE : BSE'],
+            'redemption_date': ['15-12-2030', '20-05-2028', '30-09-2035'],
+            'payin_date': ['01-01-2022', '15-03-2021', '30-06-2023']
         })
         
         st.markdown('<div class="sample-table">', unsafe_allow_html=True)
@@ -1512,21 +1581,27 @@ def main():
             st.markdown(f'<div class="step-item"><div class="step-number">{idx}</div><div>{step}</div></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("### 🎯 Key Features")
+        st.markdown("### 🎯 Comparison Features")
         st.markdown("""
         <div class="info-box">
-            <strong>✅ Fixed Missing Data:</strong><br>
-            • **Step Up/Down**: Rate, Condition, Date<br>
-            • **Call/Put Options**: Dates, Prices, Descriptions<br>
-            • **Redemption Type**: Full/Partial classification<br>
-            • **Anti-Bot**: Realistic browser headers<br>
-            • **Error Handling**: Graceful API error recovery<br><br>
+            <strong>✅ Column Comparison:</strong><br>
+            • **issuer_name** - Issuer name comparison<br>
+            • **seniority** - Seniority status<br>
+            • **secured_or_unsecured** - Security type<br>
+            • **coupon_fixed** - Fixed coupon rate<br>
+            • **issue_price** - Issue price<br>
+            • **face_value** - Face value<br>
+            • **total_issue_size_cr** - Total issue size<br>
+            • **listed_or_unlisted** - Listing status<br>
+            • **listing_exchange** - Exchange(s) listed on<br>
+            • **redemption_date** - Redemption date<br>
+            • **payin_date** - Pay-in date<br><br>
             
-            <strong>📊 Comprehensive Output:</strong><br>
-            • 80+ bond parameters extracted<br>
-            • Multiple rating agencies covered<br>
-            • Security & Guarantee details<br>
-            • Listing & Trading information
+            <strong>📊 Output Format:</strong><br>
+            • FILE value from your input<br>
+            • API value from NSDL<br>
+            • STATUS (MATCH/MISMATCH/MISSING)<br>
+            • NOTES for discrepancies
         </div>
         """, unsafe_allow_html=True)
 
